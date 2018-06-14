@@ -1,4 +1,6 @@
 function [R2d, z2d, F_Br, F_Bz, F_Bt, F_B, F_ne, F_Te] = make_profile(eq)
+% M.J. Choi (mjchoi@nfri.re.kr)
+% CC BY-NC-SA
 
 global verbose 
 global ds
@@ -8,7 +10,154 @@ global zmin
 global zmax
 global Bfactor
 
-%% use EFIT only
+%% use EFIT only eq.ne_opt == 2 %%
+
+%% coordinates and spatial resolution for interpolation
+
+[R2d, z2d] = meshgrid((Rmin:ds:Rmax),(zmin:ds:zmax));         % [m] 
+
+%% read EFIT
+
+[g, ~, gname] = efit_readg(eq.edir, eq.tCur*1000, 0);     
+psirz = g.psirz';
+[rr, zz] = meshgrid(g.r, g.z);
+
+% boundary
+bb = g.sibry - g.simag;
+
+%% read geqdsk file from the selected EFIT run time and convert it to topfile for TORBEAM
+
+gname(strfind(gname,'\')) = '/';                                                   
+system(sprintf('cp %s C:/cygwin64/home/mjchoi/eqdsk2topfile/EFIT.geqdsk', gname)); 
+fprintf('     Use the EFIT file %s for TORBEAM\n', gname);
+oldFolder = cd('C:\cygwin64\home\mjchoi\eqdsk2topfile');
+system('readeqdsk<EFIT.geqdsk');
+cd(oldFolder);
+% send topfile to the iKSTAR server for magnetic field equilibrium to run TORBEAM
+system('scp -P 2201 /home/mjchoi/eqdsk2topfile/topfile mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
+
+%% 2D B profile [T]
+
+B0 = abs(g.bcentr); % [T]  
+
+[dpsidr,dpsidz] = gradient(psirz, g.r(2) - g.r(1), g.z(2) - g.z(1));
+F_Br = @(x,y) -interp2(rr, zz, dpsidz, x, y)./x*Bfactor;
+F_Bz = @(x,y) interp2(rr, zz, dpsidr, x, y)./x*Bfactor;
+F_Bt = @(x,y) B0*1.8./x;
+F_B = @(x,y) sqrt(F_Br(x,y).^2 + F_Bz(x,y).^2 + F_Bt(x,y).^2);
+
+%% 2D electron density profile [1e19]
+if eq.ne_opt == 1
+    ne0 = eq.ne0; % [10^19 m^-3] 
+    np1 = eq.np1; %
+    np2 = eq.np2; %
+    nefunc = eval(['@(r)',eq.ne_eqn]);
+    fprintf('     Use the electron density functional form as %s\n', eq.ne_eqn);
+    
+    psi2d = interp2(rr, zz, psirz, R2d, z2d);    
+    ne2d = nefunc(psi2d - g.simag);
+    F_ne = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(ne2d*10^19, numel(ne2d), 1), 'natural'); % [m^-3]
+elseif eq.ne_opt == 2 
+    load(eq.nefname, 'psin_ne', 'ne'); 
+    fprintf('     Use the electron density data in %s\n', eq.nefname);
+    
+    psin2d = interp2(rr, zz, g.psinorm, R2d, z2d);    
+    ne2d = interp1(psin_ne, ne, psin2d, 'spline').*(psin2d <= 1) + 0.01*(psin2d > 1);
+    F_ne = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(ne2d*10^19, numel(ne2d), 1), 'natural'); % [m^-3]
+end
+
+%% 1D electron density data for TORBEAM [1e19]
+if eq.ne_opt == 1
+    psi_axis = linspace(g.simag,g.sibry,100) - g.simag;
+    psin_axis = psi_axis/bb; 
+    ne1d = nefunc(psi_axis);
+elseif eq.ne_opt == 2
+    psin_axis = psin_ne;
+    ne1d = ne;
+end
+
+% save
+psin_axis = psin_axis(:)';
+ne1d = ne1d(:)';
+fileID = fopen(fullfile('C:\cygwin64\home\mjchoi\eqdsk2topfile', 'ne.dat'),'w');
+fprintf(fileID,'%d\n',100);
+fprintf(fileID,'%f %f\n',[sqrt(psin_axis); ne1d]);
+fclose(fileID);
+
+% send ne.dat to the iKSTAR server to run TORBEAM
+system('scp -P 2201 /home/mjchoi/eqdsk2topfile/ne.dat mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
+
+%% 2D electron temperature profile [keV]
+if eq.Te_opt == 1
+    Te0 = eq.Te0; % [keV]  
+    Tp1 = eq.Tp1; %
+    Tp2 = eq.Tp2; %
+    Tefunc = eval(['@(r)',eq.Te_eqn]); % [keV]
+    fprintf('     Use the electron temperature functional form as %s\n', eq.Te_eqn);
+
+    psi2d = interp2(rr, zz, psirz, R2d, z2d);    
+    Te2d = Tefunc(psi2d - g.simag);
+    F_Te = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(Te2d*1000*1.602*10^-19, numel(Te2d), 1), 'natural'); % [J]
+elseif eq.Te_opt == 2 
+    load(eq.Tefname, 'psin_Te', 'Te'); 
+    fprintf('     Use the electron temperature data in %s\n', eq.Tefname);
+    
+    psin2d = interp2(rr, zz, g.psinorm, R2d, z2d);    
+    Te2d = interp1(psin_Te, Te, psin2d, 'spline').*(psin2d <= 1) + 0.01*(psin2d > 1);
+    F_Te = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(Te2d*1000*1.602*10^-19, numel(Te2d), 1), 'natural'); % [J]
+end
+
+%% 1D electron temperature data for TORBEAM [keV]
+if eq.Te_opt == 1
+    psi_axis = linspace(g.simag,g.sibry,100) - g.simag;
+    psin_axis = psi_axis/bb; 
+    Te1d = Tefunc(psi_axis);
+elseif eq.Te_opt == 2
+    psin_axis = psin_Te;
+    Te1d = Te;
+end
+
+% save
+psin_axis = psin_axis(:)';
+Te1d = Te1d(:)';
+fileID = fopen(fullfile('C:\cygwin64\home\mjchoi\eqdsk2topfile', 'Te.dat'),'w');
+fprintf(fileID,'%d\n',100);
+fprintf(fileID,'%f %f\n',[sqrt(psin_axis); Te1d]);
+fclose(fileID);
+
+% send Te.dat to the iKSTAR server to run TORBEAM
+system('scp -P 2201 /home/mjchoi/eqdsk2topfile/Te.dat mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
+
+%% plot if verbose
+
+if verbose
+    figure('color',[1 1 1]);
+    subplot(2,1,1); contour(R2d(1,:),z2d(:,1),ne2d,50); title('ne'); axis equal;
+    subplot(2,1,2); plot(R2d(1,:),F_ne(R2d(1,:),zeros(size(R2d(1,:))))); xlabel('R'); ylabel('ne [1e19]');
+    figure('color',[1 1 1]);
+    subplot(2,1,1); contour(R2d(1,:),z2d(:,1),Te2d,50); title('Te'); axis equal;
+    subplot(2,1,2); plot(R2d(1,:),F_Te(R2d(1,:),zeros(size(R2d(1,:))))); xlabel('R'); ylabel('Te [J]');
+end
+
+
+% %%%%%%%%%%%%%% save
+% 
+% if verbose
+%     midx = round(size(ne2d,1)/2);
+% 
+%     figure('color',[1 1 1]);
+%     subplot(2,1,1); contour(R2d(1,:),z2d(:,1),ne2d,50); title('ne'); axis equal;
+%     subplot(2,1,2); plot(R2d(1,:),ne2d(midx,:)); xlabel('R');
+%     figure('color',[1 1 1]);
+%     subplot(2,1,1); contour(R2d(1,:),z2d(:,1),Te2d,50); title('Te'); axis equal;
+%     subplot(2,1,2); plot(R2d(1,:),Te2d(midx,:)); xlabel('R');
+% end
+% 
+% save(fname,'R0','z0','kappa','delta','ne2d','Te2d','B2d','-append');
+
+% end
+
+
 
 % function make_profile(fname, in, r, R2d, z2d, verbose, dosave)
 
@@ -124,116 +273,5 @@ global Bfactor
 % eq.Tp1 = 0.95; %
 % eq.Tp2 = 5; %
 % eq.Te_eqn  = '(0.05 + (Te0/2)*(1 + tanh(Tp2^2*(Tp1^2 - (r/(bb)).^2))).*exp(-(r/(bb)).^2/2))'; % [keV]
-
-%% coordinates and spatial resolution for interpolation
-
-[R2d, z2d] = meshgrid((Rmin:ds:Rmax),(zmin:ds:zmax));         % [m] 
-
-%% read EFIT
-
-[g, ~, gname] = efit_readg(eq.edir, eq.tCur*1000, 0);     
-psirz = g.psirz';
-[rr, zz] = meshgrid(g.r, g.z);
-
-% boundary
-bb = g.sibry - g.simag;
-
-%% read geqdsk file from the selected EFIT run time and convert it to topfile for TORBEAM
-
-gname(strfind(gname,'\')) = '/';                                                   
-system(sprintf('cp %s C:/cygwin64/home/mjchoi/eqdsk2topfile/EFIT.geqdsk', gname)); 
-fprintf('     Use the EFIT file %s for TORBEAM\n', gname);
-oldFolder = cd('C:\cygwin64\home\mjchoi\eqdsk2topfile');
-system('readeqdsk<EFIT.geqdsk');
-cd(oldFolder);
-% send topfile to the iKSTAR server for magnetic field equilibrium to run TORBEAM
-system('scp -P 2201 /home/mjchoi/eqdsk2topfile/topfile mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
-
-%% 2D B profile [T]
-
-B0 = abs(g.bcentr); % [T]  
-
-[dpsidr,dpsidz] = gradient(psirz, g.r(2) - g.r(1), g.z(2) - g.z(1));
-F_Br = @(x,y) -interp2(rr, zz, dpsidz, x, y)./x*Bfactor;
-F_Bz = @(x,y) interp2(rr, zz, dpsidr, x, y)./x*Bfactor;
-F_Bt = @(x,y) B0*1.8./x;
-F_B = @(x,y) sqrt(F_Br(x,y).^2 + F_Bz(x,y).^2 + F_Bt(x,y).^2);
-
-%% 2D electron density profile [1e19]
-
-ne0 = eq.ne0; % [10^19 m^-3] 
-np1 = eq.np1; %
-np2 = eq.np2; %
-nefunc = eval(['@(r)',eq.ne_eqn]);
-
-% scatteredInterpolant function
-psi2d = interp2(rr, zz, psirz, R2d, z2d);    
-ne2d = nefunc(psi2d - g.simag);
-F_ne = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(ne2d*10^19, numel(ne2d), 1)); % [m^-3]
-
-%% 1D electron density data for TORBEAM [1e19]
-
-psi_axis = linspace(g.simag,g.sibry,80) - g.simag; 
-ne1d = nefunc(psi_axis);
-
-% save
-fileID = fopen(fullfile('C:\cygwin64\home\mjchoi\eqdsk2topfile', 'ne.dat'),'w');
-fprintf(fileID,'%d\n',80);
-fprintf(fileID,'%f %f\n',[sqrt(psi_axis(end:-1:1)/bb); ne1d(end:-1:1)]);
-fclose(fileID);
-
-% send ne.dat to the iKSTAR server to run TORBEAM
-system('scp -P 2201 /home/mjchoi/eqdsk2topfile/ne.dat mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
-
-%% 2D electron temperature profile [keV]
-
-Te0 = eq.Te0; % [keV]  
-Tp1 = eq.Tp1; %
-Tp2 = eq.Tp2; %
-Tefunc = eval(['@(r)',eq.Te_eqn]); % [keV]
-
-psi2d = interp2(rr, zz, psirz, R2d, z2d);    
-Te2d = Tefunc(psi2d - g.simag);
-F_Te = scatteredInterpolant(reshape(R2d, numel(R2d), 1), reshape(z2d, numel(z2d), 1), reshape(Te2d*1000*1.602*10^-19, numel(Te2d), 1)); % [J]
-
-%% 1D electron temperature data for TORBEAM [keV]
-
-Te1d = Tefunc(psi_axis);
-
-% save
-fileID = fopen(fullfile('C:\cygwin64\home\mjchoi\eqdsk2topfile', 'Te.dat'),'w');
-fprintf(fileID,'%d\n',80);
-fprintf(fileID,'%f %f\n',[sqrt(psi_axis/bb); Te1d]);
-fclose(fileID);
-
-% send Te.dat to the iKSTAR server to run TORBEAM
-system('scp -P 2201 /home/mjchoi/eqdsk2topfile/Te.dat mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam');
-
-
-if verbose
-    figure('color',[1 1 1]);
-    subplot(2,1,1); contour(R2d(1,:),z2d(:,1),ne2d,50); title('ne'); axis equal;
-    subplot(2,1,2); plot(R2d(1,:),F_ne(R2d(1,:),zeros(size(R2d(1,:))))); xlabel('R'); ylabel('ne [1e19]');
-    figure('color',[1 1 1]);
-    subplot(2,1,1); contour(R2d(1,:),z2d(:,1),Te2d,50); title('Te'); axis equal;
-    subplot(2,1,2); plot(R2d(1,:),F_Te(R2d(1,:),zeros(size(R2d(1,:))))); xlabel('R'); ylabel('Te [J]');
-end
-
-% %%%%%%%%%%%%%% save
-% 
-% if verbose
-%     midx = round(size(ne2d,1)/2);
-% 
-%     figure('color',[1 1 1]);
-%     subplot(2,1,1); contour(R2d(1,:),z2d(:,1),ne2d,50); title('ne'); axis equal;
-%     subplot(2,1,2); plot(R2d(1,:),ne2d(midx,:)); xlabel('R');
-%     figure('color',[1 1 1]);
-%     subplot(2,1,1); contour(R2d(1,:),z2d(:,1),Te2d,50); title('Te'); axis equal;
-%     subplot(2,1,2); plot(R2d(1,:),Te2d(midx,:)); xlabel('R');
-% end
-% 
-% save(fname,'R0','z0','kappa','delta','ne2d','Te2d','B2d','-append');
-
-% end
 
 end
