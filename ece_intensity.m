@@ -1,4 +1,7 @@
 function [Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, theta, Rc, omega, m, F_B, F_Te, F_ne)
+% M.J. Choi (mjchoi@nfri.re.kr)
+% CC BY-NC-SA
+
 % all mks units except Te
 % Rp : R coordinates on beam path [m]
 % zp : z coordinate on beam path [m]
@@ -111,6 +114,7 @@ for i=2:N
     ds(i) = sqrt((Rp(i) - Rp(i-1))^2 + (zp(i) - zp(i-1))^2);
     s(i) = s(i-1) + ds(i);
 end
+% fprintf('    ECE intensity calculation step ds : %g \n', mean(ds)');
 
 % calculate optical depth and transfer intensity
 tau = trapz(s,ams) - cumtrapz(s, ams);

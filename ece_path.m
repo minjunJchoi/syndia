@@ -1,4 +1,6 @@
 function [fs, dz, Rpi, zpi, thetai] = ece_path(R2d, z2d, F_Br, F_Bz, F_Bt, F_B, opt, dn, fidx, zidx)
+% M.J. Choi (mjchoi@nfri.re.kr)
+% CC BY-NC-SA
 
 %% global parameters
 
@@ -23,7 +25,7 @@ wce = @(x,y) e*F_B(x,y)/me; % [rad/s]
 
 %% determine zs, as, fs of a selected single channel (zidx, fidx)
 
-Rinit = 2.39; % [m]
+Rinit = 2.39; % beam path calculation intiation point [m]
 dz = linspace(zstart,zend,Nz); % [mm] effective vertical range at mini lens 
 zs = zeros(size(dz)); % [m]
 as = zeros(size(dz)); % [rad]
@@ -37,9 +39,9 @@ fs = linspace((fidx-1)*0.9 + 2.6 + opt.LO(dn) + fstart, (fidx-1)*0.9 + 2.6 + opt
 
 %% calculate
 
-Rpi = cell(length(fs), length(zs));
-zpi = cell(length(fs), length(zs));
-thetai = cell(length(fs), length(zs));
+Rpi = cell(length(zs), length(fs));
+zpi = cell(length(zs), length(fs));
+thetai = cell(length(zs), length(fs));
 
 % inside single channel 
 for fn = 1:length(fs) 
@@ -63,6 +65,11 @@ for fn = 1:length(fs)
         system('scp -P 2201 mjchoi@172.17.250.11:~/torbeam_ifortran/run_torbeam/t1_LIB.dat ./');
         beampath = dlmread(fullfile('./', 't1_LIB.dat'));
         cpath = beampath(:,1:2)/100; % for central position [m]
+        
+        minR = min(cpath(:,1)) + 0.01; % (min(fR) - 0.3) %%%%%%%%%%%%%%%%%%
+        cend = find(cpath(:,1) <= minR, 1, 'first'); 
+        cpath = cpath(1:cend,:);
+        
         Rp = cpath(:,1)'; % beam path starts from (calculation start point(xxb) - 1) cm 
         zp = cpath(:,2)';
         theta = zeros(size(Rp));            
@@ -85,11 +92,11 @@ for fn = 1:length(fs)
         idx1 = find(Rp >= P(1) + pend, 1, 'last'); 
                 
         nidx = idx2:-pint:idx1; 
-        Rpi{fn,vn} = interp1(idx2:-1:idx1, Rp(idx2:-1:idx1), nidx);
-        zpi{fn,vn} = interp1(idx2:-1:idx1, zp(idx2:-1:idx1), nidx);
-        thetai{fn,vn} = interp1(idx2:-1:idx1, theta(idx2:-1:idx1), nidx);        
+        Rpi{vn,fn} = interp1(idx2:-1:idx1, Rp(idx2:-1:idx1), nidx);
+        zpi{vn,fn} = interp1(idx2:-1:idx1, zp(idx2:-1:idx1), nidx);
+        thetai{vn,fn} = interp1(idx2:-1:idx1, theta(idx2:-1:idx1), nidx);        
 
-        fprintf('# %d - %d sub_ray done\n', fn, vn)     
+%         fprintf('# vn %d - fn %d sub_ray path calculation done\n', vn, fn)     
     end
 end 
 

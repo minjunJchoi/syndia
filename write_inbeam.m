@@ -2,7 +2,7 @@ function write_inbeam(nmod, xf, xpoldeg, xzb)
 fileID = fopen(fullfile('C:\cygwin64\home\mjchoi\eqdsk2topfile', 'inbeam.dat'),'w');
 fprintf(fileID,'&edata\n');
 
-if nmod == 2;
+if nmod == 2
     nmod = -1;
 end
 

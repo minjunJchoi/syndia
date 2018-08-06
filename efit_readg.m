@@ -7,7 +7,8 @@
 % g: EFIT G structure
 % t_efit: the time point at which the EFIT is calculated (in msec). 
 % 
-% 2010/12/10, Gunsu S. Yun 
+% 2010/12/10, Gunsu S. Yun
+% Modified by Minjun J. Choi
 %
 
 %% Referece:
@@ -58,14 +59,15 @@ end
 
 fname = strtrim(flist(find(abs(tlist - t)==min(abs(tlist - t)), 1, 'first'),:));
 t_efit = tlist(find(abs(tlist - t)==min(abs(tlist - t)), 1, 'first'));
-fname = fullfile(fdir,fname)
+fname = fullfile(fdir,fname);
 
 if exist(sprintf('%s.mat',fname), 'file') 
     load(sprintf('%s.mat',fname));
-%     disp(fname)
+    fprintf('    Read EFIT data in %s.mat\n',fname);
 else
     if exist(fname, 'file') 
         fid = fopen(fname, 'rt');
+        fprintf('    Read EFIT g-file in %s\n',fname);
 
         %% basic EFIT parameters
         %line01:   EFITD    01/23/2002    #  4362  1701ms  3    65  65
@@ -228,6 +230,14 @@ else
         g.r = g.r;
         g.z = g.z;
 
+    %% norm psi
+        psinorm = (g.psirz' - g.simag)./(g.sibry - g.simag);
+        r2d = repmat(g.r, [g.mw 1]);
+        z2d = repmat(g.z(:), [1 g.mh]);
+        g.r2d = r2d;
+        g.z2d = z2d;
+        g.psinorm = psinorm;
+    
         save(sprintf('%s.mat',fname), 'g');
     else
         fprintf('%s file does not exist\n',fname)
@@ -240,7 +250,7 @@ if exist('verbose', 'var') && verbose == 1
     plot(g.lim(1,:), g.lim(2,:), '-b'); hold on;
     plot(g.bdry(1,:), g.bdry(2,:), '-r', 'LineWidth',2);
 
-    contour(g.r, g.z, g.psirz', 135, ':k');
+    contour(g.r, g.z, g.psinorm, 135, ':k');
 
     axis equal;
     xlim([min(g.lim(1,:)), max(g.lim(1,:))]);
@@ -259,7 +269,7 @@ if exist('verbose', 'var') && verbose == 2
     vcdelta = (g.sibry-g.simag)/(g.mw-1)*2;
     vc = g.simag:vcdelta:g.sibry;
     % [C, h]= contour(g.r, g.z, g.psirz', vc, ':k');
-    [C, h]= contour(g.r, g.z, g.psirz', 50);
+    [C, h]= contour(g.r, g.z, g.psinorm, 50);
 %     clabel(C,h);
 
     axis equal;
@@ -293,5 +303,26 @@ if exist('verbose', 'var') && verbose == 2
     
 end
 
+if exist('verbose', 'var') && verbose == 3   
+    qs = 2;
+    qgrid = linspace(0,1,g.mw); % normalized psi form 
+    psinqs = interp1(g.qpsi, qgrid, qs);
+    fprintf('q = %g at normalized psi %g \n', qs, psinqs);
+    
+    figure('color',[1 1 1]); 
+    subplot(2,2,[1,3]);
+    contour(g.r2d, g.z2d, g.psinorm, (0.01:0.01:1)); hold on;
+    contour(g.r2d, g.z2d, g.psinorm, [psinqs psinqs], 'LineColor', 'r', 'LineWidth', 2); hold on;
+%         axis equal; view([0 90])
+        % xlim([min(g.lim(1,:)), max(g.lim(1,:))]);
+        % ylim([min(g.lim(2,:)), max(g.lim(2,:))]);
+    plot(g.lim(1,:), g.lim(2,:), '-b'); hold on;
+
+
+    
+    subplot(2,2,2);    
+
+    plot(qgrid, g.qpsi)
+end
 
 

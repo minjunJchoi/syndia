@@ -1,3 +1,7 @@
+%% 
+% This code calculates 2D T_rad from the given ne, Te, and EFIT
+% M.J. Choi (mjchoi@nfri.re.kr)
+% CC BY-NC-SA
 %% global parameters
 
 global e
@@ -31,57 +35,80 @@ mc2 = me*c^2;
 Bfactor = 1; % 1 = include Br and Bz from EFIT
 
 verbose = 0; % plot 
-ds = 0.001; % resolution [m]
+ds = 0.001; % profile resolution [m]
 Rmin = 1.2; % [m]
 Rmax = 2.4; % [m]
 zmin = -0.5; % [m]
 zmax = 0.5; % [m]
 
-Nz = 10; % number of vertical rays for a single channel
-Nf = 10; % number of frequency rays for a single channel
-zstart = -10; % [mm] first ray at the mini lens
-zend = 10; % [mm] last ray at the mini lens
-fstart = -0.3; % [GHz] frequency bandwidth
-fend = 0.3; % [GHz] frequency bandwidth
+Nz = 3; % number of vertical rays for a single channel
+Nf = 4; % number of frequency rays for a single channel
+zstart = -10; % [mm] first ray at the mini lens -14
+zend = 10; % [mm] last ray at the mini lens 14
+fstart = -0.2; % [GHz] frequency bandwidth -0.3
+fend = 0.2; % [GHz] frequency bandwidth +0.3
 
-pstart = -0.14; % start point = cold resonance + pstart
-pend = 0.03; % end point = cold resonance + pend
-pint = 0.1; % interpolation step. 0.1 = 10%
+pstart = -0.14; % [m] start point = cold resonance + pstart
+pend = 0.03; % [m] end point = cold resonance + pend
+pint = 0.1; % ECE integration path inter step. 0.1 = 10%
 %% physical parameters
 
-% calculat path
-calpath = 0;
+% calculate path
+calpath = 1;
 
 % ECEI shot
-fdir = 'Z:\KSTAR\ecei_data\013250';
+fdir = 'C:\data\ecei_data\013728';
 
-% output filename
-outputf = fullfile(fdir,'eceipath.mat');
+% analysis time
+eq.tCur = 3.4; % [s]
 
 % EFIT
-eq.shotname = '13250';
-eq.edir = 'Z:\KSTAR\keydiag_data\13250_EFIT';
-eq.tCur = 2300;
+eq.shotname = '13728';
+eq.edir = 'C:\Gdrive\summary\Choi_avalanche_mode_coupling\ECEI_cpc';
 
-% electron density
+% profile data
+eq.pdir = 'C:\Gdrive\summary\Choi_avalanche_mode_coupling\ECEI_cpc';
+
+
+% 1 density functional form (psi2d - g.simag coordinate) or 2 data (nomralized psi coordinate) % [10^-19 m^-3]
+eq.ne_opt = 2; 
+
+% electron density (functional form; ne_opt = 1)
 eq.ne0 = 4.0; % [10^19 m^-3]
 eq.np1 = 0.95; 
 eq.np2 = 5; 
-eq.ne_eqn = '(0.05 + (ne0/2)*(1 + tanh(np2^2*(np1^2 - (r/(bb)).^2))).*exp(-(r/(bb)).^2/2))'; % [10^-19 m^-3]
+eq.ne_eqn = '(0.05 + (ne0/2)*(1 + tanh(np2^2*(np1^2 - (r/(bb)).^2))).*exp(-(r/(bb)).^2/2))'; 
 
-% electron temperature
+% electron density (data; ne_opt = 2)
+eq.nefname = fullfile(eq.pdir, sprintf('ne_%d_smooth.mat',eq.tCur*1000));
+
+% 1 temperature functional form (psi2d - g.simag coordinate) or 2 data (nomralized psi coordinate) % [keV]
+eq.Te_opt = 2; 
+
+% electron temperature (functional form; Te_opt = 1)
 eq.Te0 = 3.6; % [keV]
 eq.Tp1 = 0.95; %
 eq.Tp2 = 5; %
-eq.Te_eqn  = '(0.05 + (Te0/2)*(1 + tanh(Tp2^2*(Tp1^2 - (r/(bb)).^2))).*exp(-(r/(bb)).^2/2))'; % [keV]
+eq.Te_eqn  = '(0.05 + (Te0/2)*(1 + tanh(Tp2^2*(Tp1^2 - (r/(bb)).^2))).*exp(-(r/(bb)).^2/2))'; 
+
+% electron temperature (data; Te_opt = 2)
+eq.Tefname = fullfile(eq.pdir, sprintf('Te_%d_smooth.mat',eq.tCur*1000));
+
+
 
 % choose device and channels : vacuum propagation 
 dn = 1;
-fidx = 5; % low 1--high 8 frerquency channel numbering
-zidx = 17; % low 1--high 24 vertical channel numbering
+fidx = (1:8); % low 1--high 8 frerquency channel numbering
+zidx = (1:24); % low 1--high 24 vertical channel numbering
 
 Lcz = 9; % gaussian optics coupling e^2-fallding distance [mm] 
-Bcf = 0.3; % gaussian optics coupling e^2-fallding distance [mm] 
+Bcf = 0.3; % gaussian optics coupling e^2-fallding distance [GHz] 
+
+
+% output filename
+dev = 'LHG';
+outputf = fullfile(fdir, sprintf('%cD_ecei_modeling_%05d.mat', dev(dn), eq.tCur*1000));
+
 
 % load optics settings
 opt = load_hdf5_attributes(fdir, eq.shotname);
@@ -93,19 +120,28 @@ opt = load_hdf5_attributes(fdir, eq.shotname);
 %% YOU CAN ADD PERTURBATION HERE FOR ACCURATE CALCULATION %%
 %%%% YOU CAN ADD PERTURBATION HERE FOR ACCURATE CALCULATION %%%%
 
+
 %% calculate ece path for selected channels
 
-Rp = cell(1,length(fidx));
-zp = cell(1,length(fidx));
-theta = cell(1,length(fidx));
-fs = cell(1,length(fidx)); % sub ray in frequency
-dz = cell(1,length(fidx)); % sub ray in z @ mini lens
+Rp = cell(length(zidx),length(fidx));
+zp = cell(length(zidx),length(fidx));
+theta = cell(length(zidx),length(fidx));
+fs = cell(length(zidx),length(fidx)); % sub ECE ray frequency [GHz]
+dz = cell(length(zidx),length(fidx)); % sub ECE ray in z @ mini lens
 if verbose
     figure('color',[1 1 1]) %%%% PLOT %%%%
 end
 if calpath 
-    for k = 1:length(fidx)
-        [fs{k}, dz{k}, Rp{k}, zp{k}, theta{k}] = ece_path(R2d, z2d, F_Br, F_Bz, F_Bt, F_B, opt, dn, fidx, zidx);
+    for f = 1:length(fidx)
+        for z = 1:length(zidx)
+            tic
+            
+            [fs{z,f}, dz{z,f}, Rp{z,f}, zp{z,f}, theta{z,f}] = ece_path(R2d, z2d, F_Br, F_Bz, F_Bt, F_B, opt, dn, fidx(f), zidx(z));
+            
+            fprintf('##################### z %d - f %d PATH done ################# \n', z, f)    
+            
+            toc
+        end
     end
     save(outputf,'fidx','zidx','fs','dz','Rp','zp','theta');
 else
@@ -117,54 +153,69 @@ end
 
 %% calculate ece intensity for selected channels
 
-tic
-Imeas = zeros(size(fidx));
-Rch = zeros(size(fidx));
-zch = zeros(size(fidx));
-Is = cell(1,length(fidx));
-S = cell(1,length(fidx));
-for k = 1:length(fidx)
-    Is{k} = zeros(Nf,Nz);
-    S{k} = zeros(Nf,Nz);
-    for i = 1:length(fs{k})
-        for j = 1:length(dz{k})
-            if verbose
-                plot(Rp{k}{i,j}, zp{k}{i,j}, 'k'); hold all; %%%% PLOT %%%%
-            end
-            
-            % re-define functions for speed
-            F_nes = scatteredInterpolant(Rp{k}{i,j}', zp{k}{i,j}', F_ne(Rp{k}{i,j},zp{k}{i,j})'); % [m^-3]
-            F_Tes = scatteredInterpolant(Rp{k}{i,j}', zp{k}{i,j}', F_Te(Rp{k}{i,j},zp{k}{i,j})'); % [J]
-            F_Bs = scatteredInterpolant(Rp{k}{i,j}', zp{k}{i,j}', F_B(Rp{k}{i,j},zp{k}{i,j})'); % [T]
-            
-            % calculate ECE intensity
-            [Rm, zm, ~, ~, ~, ~, Iece] = ece_intensity(Rp{k}{i,j}, zp{k}{i,j}, theta{k}{i,j}, 0, fs{k}(i)*2*pi()*10^9, opt.harmonic(dn), F_Bs, F_Tes, F_nes);
-            
-%             % flat response function average
-%             Imeas(k) = Imeas(k) + Iece/(Nf*Nz); 
+Imeas = zeros(length(zidx),length(fidx));
+Trad  = zeros(length(zidx),length(fidx));
+Te    = zeros(length(zidx),length(fidx));
+Rch   = zeros(length(zidx),length(fidx));
+zch   = zeros(length(zidx),length(fidx));
+Is     = cell(length(zidx),length(fidx));
+S      = cell(length(zidx),length(fidx));
+for f = 1:length(fidx)
+    for z = 1:length(zidx)
+        tic
+        
+        Is{z,f} = zeros(Nf,Nz);
+        S{z,f} = zeros(Nf,Nz);
+        for j = 1:length(fs{z,f})
+            for i = 1:length(dz{z,f})
+                if verbose
+                    plot(Rp{z,f}{i,j}, zp{z,f}{i,j}, 'k'); hold all; %%%% PLOT %%%%
+                end
 
-            % Gaussian response function
-            dS = exp(-2*(dz{k}(j)/Lcz).^4) * exp(-2*((fs{k}(i)-mean(fs{k}))/Bcf).^4);
-            S{k}(i,j) = dS;
-            Imeas(k) = Imeas(k) + Iece * dS;
-            
-            % channel position
-            Rch(k) = Rch(k) + Rm/(Nf*Nz); 
-            zch(k) = zch(k) + zm/(Nf*Nz); 
-            
-            if verbose
-                plot(Rm, zm, 'o') %%%% PLOT %%%%
+                % re-define functions for speed
+                F_nes = scatteredInterpolant(Rp{z,f}{i,j}', zp{z,f}{i,j}', F_ne(Rp{z,f}{i,j},zp{z,f}{i,j})'); % [m^-3]
+                F_Tes = scatteredInterpolant(Rp{z,f}{i,j}', zp{z,f}{i,j}', F_Te(Rp{z,f}{i,j},zp{z,f}{i,j})'); % [J]
+                F_Bs =  scatteredInterpolant(Rp{z,f}{i,j}', zp{z,f}{i,j}',  F_B(Rp{z,f}{i,j},zp{z,f}{i,j})'); % [T]
+
+                % calculate ECE intensity
+                [Rm, zm, ~, ~, ~, ~, Iece] = ece_intensity(Rp{z,f}{i,j}, zp{z,f}{i,j}, theta{z,f}{i,j}, 0, fs{z,f}(j)*2*pi()*10^9, opt.harmonic(dn), F_Bs, F_Tes, F_nes);
+
+    %             % flat response function average
+    %             Imeas(f) = Imeas(f) + Iece/(Nf*Nz); 
+
+                % Gaussian response function [Rathgeber PPCF2013 (15--17)]
+                dS = exp(-2*(dz{z,f}(i)/Lcz).^4) * exp(-2*((fs{z,f}(j)-mean(fs{z,f}))/Bcf).^4);
+                S{z,f}(i,j) = dS;
+                Imeas(z,f) = Imeas(z,f) + Iece * dS;
+
+                % channel position
+                Rch(z,f) = Rch(z,f) + Rm/(Nf*Nz); 
+                zch(z,f) = zch(z,f) + zm/(Nf*Nz); 
+
+                if verbose
+                    plot(Rm, zm, 'o') %%%% PLOT %%%%
+                end
+
+                Is{z,f}(i,j) = Iece;
             end
-            
-            Is{k}(i,j) = Iece;
         end
+        Imeas(z,f) = Imeas(z,f)/sum(sum(S{z,f})); % spatial average  [Rathgeber PPCF2013 (15--17)]
+        Trad(z,f) = Imeas(z,f) / ((mean(fs{z,f})*2*pi()*10^9/(2*pi*c)).^2) / (1000*1.602*10^-19); % [keV] 
+        
+        Te(z,f)   = F_Te(Rch(z,f), zch(z,f)) / (1000*1.602*10^-19); % [keV]
+        fprintf('##################### z %d - f %d Imeas done ################# \n', z, f)    
+        
+        toc
     end
-    Imeas(k) = Imeas(k)/sum(sum(S{k}));
 end
-toc
 
-Imeas(1) % measured ECE intensity
-(mean(fs{1})*2*pi()*10^9/(2*pi*c)).^2*F_Te(Rch(1), zch(1)) % Ibb
+% Imeas(1) % measured ECE intensity over frequency and vertical area
+% (mean(fs{1})*2*pi()*10^9/(2*pi*c)).^2 * F_Te(Rch(1), zch(1)) % Ibb
+
+% fprintf('first selected channel T_rad [keV] : %g \n', Trad(1,1) );
+% fprintf('first selected channel T_e [keV]   : %g \n', Te(1,1) );
+
+save(outputf,'Imeas', 'Trad', 'Te', 'Is', 'S', 'Rch', 'zch', '-append');
 
 if verbose
     plot(Rch, zch, 'sq') %%%% PLOT %%%%

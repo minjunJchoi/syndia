@@ -7,6 +7,7 @@ function [zR, aR] = vac_path_now(dn, sf, sz, R, dz)
 % sf = 1600;
 % sz = 960; 
 
+fprintf('Calculate vacuum ECE path AFTER 2015 campaign \n');
 fprintf('device number : %d, focus lens position : %d [mm], zoom lens position : %d [mm] \n', dn, sf, sz);
 
 % will find an beam angle at R = 2.39 m
