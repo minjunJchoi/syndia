@@ -1,15 +1,15 @@
 
-tCur = 4200;
+tCur = 3900;
 Nint = 100;
 
 % read EFIT
-edir = 'Z:\KSTAR\keydiag_data\17245_EFIT02_HSKim\';
+edir = 'C:\Gdrive\ECEI_modeling\KSTAR_runs\13728\';
 [g, t_efit, gname] = efit_readg(edir, tCur, 1); 
 
 % profile
-pdir = 'Z:\KSTAR\keydiag_data\17245\L-mode_4200';
-%% density
-% % ne data (R -> normalized_psi_coordinate)
+pdir = 'C:\Gdrive\ECEI_modeling\KSTAR_runs\13728\';
+%% density [1e19 m^-3]
+% ne data (R -> normalized_psi_coordinate)
 % RawNeFname = fullfile(pdir, sprintf('ne_%d.mat',tCur));
 % load(RawNeFname, 'R_ne', 'ne'); % LOAD R_ne [m] and ne [1e19 m^-3]
 % [rr, zz] = meshgrid(g.r, g.z);
@@ -53,8 +53,7 @@ pdir = 'Z:\KSTAR\keydiag_data\17245\L-mode_4200';
 % ne_fit = nefunc(psin_ne*bb);
 % plot(psin_ne, ne_fit);
 
-%% Temperature 
-
+%% Temperature [keV]
 % Te data (R -> normalized_psi_coordinate)
 Tefname = fullfile(pdir, sprintf('Te_%d.mat',tCur));
 load(Tefname, 'R_Te', 'Te'); % LOAD R_Te [m] and Te [keV]
@@ -64,7 +63,7 @@ psin_Te = interp2(rr, zz, g.psinorm, R_Te, zeros(size(R_Te)));
 figure; plot(psin_Te, Te,'o'); hold on;
 
 % need smoothing
-pp = polyfit(psin_Te, Te, 7);
+pp = polyfit(psin_Te, Te, 4);
 
 psin_axis = ((linspace(g.simag,g.sibry,100) - g.simag)/(g.sibry - g.simag)).'; 
 Tefit = polyval(pp, psin_axis);
@@ -91,6 +90,9 @@ Te2d = interp1(psin_Te, Te, psi2d, 'spline').*(psi2d <= 1) + 0.01*(psi2d > 1);
 
 figure; 
 imagesc(R2d(1,:), z2d(:,1), Te2d);
+
+
+
 
 
 % Tefname = fullfile(edir, sprintf('Te_%d.mat',t_efit));
