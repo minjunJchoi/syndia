@@ -42,12 +42,12 @@ def get_B_normal(self,R,Z):
 
 
 def EquiB_package_for_dk(self,R,Z):
-    Equilibrium values calculator for drift equation 
+    Equilibrium values calculator for drift equation
     input: R, Z
-    output: Dictionary 
-        data['B']       : Absolute B value        
-        data['Bvec']    : Bvec ( Br, Bphi, Bz) 
-        data['b']       : Bvec/B       
+    output: Dictionary
+        data['B']       : Absolute B value
+        data['Bvec']    : Bvec ( Br, Bphi, Bz)
+        data['b']       : Bvec/B
         data['curl_b']  : Curl B
         data['Grad_B']  : Grad B
         data['Grad_B_cross_b']  : Grad B x b
@@ -99,7 +99,7 @@ def Curvature(self,R,Z):
     output: Current from magnetic field
 
 def b_X_Grad_lnB(self,R,Z):
-    vector component for Grad B drift 
+    vector component for Grad B drift
     b x Grad B / B
     input: R, Z
     output: vector components
@@ -115,13 +115,13 @@ def e_drift(self,R,Z,E,Lambda):
     R : R position
     Z : Z position
     E : Energy in eV unit
-    Lambda : v||^2 / v^2 
+    Lambda : v||^2 / v^2
     return
         vR, vphi,vZ
 
 def dXdt_Lorbit(self,t,y,arg1):
     dX/dt and dV/dt calculator in R,phi Z coordinator for Lorentz equation
-    input  
+    input
         t: time
         y: [R, phi, Z, VR, dphi/dt, VZ] where Vphi = R * dphi/dt
         arg1: charge / mass
@@ -130,9 +130,9 @@ def dXdt_Lorbit(self,t,y,arg1):
 
 def dXdt(self,t,y,arg1):
     dX/dt and dV||/dt calculator in R,phi Z coordinator for drift equation
-    input  
+    input
         t: time
-        y: [R, phi, Z, V||] 
+        y: [R, phi, Z, V||]
         arg1: [charge, mass/charge, m] where m is mass of test particle
     return
         [dR/dt, dphi/dt, dZ/dt, dV||/dt]
@@ -140,21 +140,21 @@ def dXdt(self,t,y,arg1):
 def dXdt_RE(self,t,y,arg1):
     dX/dt and dV||/dt calculator in R,phi Z coordinator for relativistic drift equation
         specially runaway electron
-    input  
+    input
         t: time
-        y: [R, phi, Z, V||, magnetic momentum] 
-        arg1: [charge, mass/charge, m, mc2] where m is mass of test particle and mc2 is 
+        y: [R, phi, Z, V||, magnetic momentum]
+        arg1: [charge, mass/charge, m, mc2] where m is mass of test particle and mc2 is
             rest mass energy
     return
         [dR/dt, dphi/dt, dZ/dt, dV||/dt]
 
 def psin_RZ(self,psi_n, ns = 300):
-    Calculateor R, Z value having psi_n on the line from (Rmaxis, Zmaxis) 
+    Calculateor R, Z value having psi_n on the line from (Rmaxis, Zmaxis)
         to (maximum R_lcfs, Zmaxis)
-    input 
+    input
         psi_n: normalized psi value from 0 to 1
         ns  : number of grids of the line from Axis to boundary
-    return 
+    return
         the value of [R, Z] having psi_n
 
 def dr(self,t,y):
@@ -164,18 +164,18 @@ def dr(self,t,y):
         y: [R, Z]
     return
         [dR/dphi, dZ/dphi];
-        
+
 
 def ang(self,A,B):
     Angle between 2D vector A and B
     return angle in radian
 
-def polyg(self, psi_n, ndphi = 100):   
+def polyg(self, psi_n, ndphi = 100):
     Calculation of polygon consisting flux surface
-    input 
+    input
         psi_n:normalized psi value which we want to know
         ndphi: between points toroidal angle
-    return 
+    return
         flux surface R, Z
 
 
@@ -199,10 +199,10 @@ def init_data_o(self,surf_int_func):
 
 def BtBphi(self,R,Z):
     local pitch
-    input 
+    input
         R: radial position
         Z: vertical position
-    return 
+    return
         local pitch
 
 def abs_grad_psi(self,R,Z):
@@ -211,7 +211,7 @@ def abs_grad_psi(self,R,Z):
         R: radial position
         Z: vertical position
 
-def Closed_Lines(self,qv,the0,ndphi = 1000): 
+def Closed_Lines(self,qv,the0,ndphi = 1000):
     closed field line
     inputs
         qv : qvalue of integer
@@ -260,7 +260,7 @@ def transit_Lorbit(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,
         sigma:  is parallel or antiparallel
         Lambda: is v||^2/v^2
         psi:    is 0 to 1
-        MaxT:   is maximum T of dt unit 
+        MaxT:   is maximum T of dt unit
                 here dt is 0.01/f where f is cyclotron frequency
     return
         [total path]
@@ -268,7 +268,7 @@ def transit_Lorbit(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,
 
 ==========Code change log===================================
 ________________________________
-1. Add grad theta vector calculation 
+1. Add grad theta vector calculation
 2. Add drift and bounce/transit frequency calculation
 3. Add dXdt for drift motion
 17 May 2018
@@ -276,9 +276,9 @@ Tongnyeol Rhee
 
 ________________________________
 1. Add e_drift for runaway electron drift velocity calculation
-2. b_X_Grad_lnB(R,Z) for calculation of gradB drift 
+2. b_X_Grad_lnB(R,Z) for calculation of gradB drift
 3. b_X_Curv(R,Z); for curvature drift calculation
-25 May 2018 
+25 May 2018
 Tongneyol Rhee
 
 
@@ -310,7 +310,7 @@ Add routines for Flux surface average
         return angle in radian
 3. def polyg(psi_n, ndphi = 100)
         Calculation of polygon consisting flux surface
-        input 
+        input
             psi_n:normalized psi value which we want to know
             ndphi: between points toroidal angle
         return flux surface R, Z
@@ -370,7 +370,7 @@ Curl_B = g1.Curl_B(R,Z)
 #Magnetic field BR, BZ, Bphi
 Bvec = g1.B_field(R,Z);
 
-#Grad B 
+#Grad B
 Grad_B = g1.Grad_B(R,Z)
 
 #flux surface contour of given normalized poloidal flux surface
@@ -392,7 +392,7 @@ mu      = 2.    #ion mass ratio to proton mass
 charge  = 1.    #ion charge ratio to e
 Lambda  = 0.9   #v||^2/V^2
 sigma   = 1.;   # 1 is parallel and -1 is anti parallel to magnetic field
-psiN    = 0.8   # 
+psiN    = 0.8   #
 
 #Runaway electron drift orbit
 E_RE    = 10.e6 #10MeV electron
@@ -453,11 +453,11 @@ class geqdsk_dk(Geqdsk):
       f=interpolate.interp2d(r,z,self.get('psirz'),kind='linear')
       nbbbs = self.data['nbbbs'][0]
       psis = np.zeros((nbbbs,),np.float64)
-      for i in range(nbbbs): 
+      for i in range(nbbbs):
         psis[i] = f(rbs[i],zbs[i])
       return np.average(psis)
-    
-    def get_psi(self):        
+
+    def get_psi(self):
       """
       Return psi interpolation on 2D
       psi_p = f(R, Z)
@@ -487,9 +487,9 @@ class geqdsk_dk(Geqdsk):
         else:
             pass;
         return self.f_normal
-    
-    
-    
+
+
+
     def get_eps(self):
       """
       Return ellipticity
@@ -499,7 +499,7 @@ class geqdsk_dk(Geqdsk):
       minz=np.min(self.data['zbbbs'][0])
       maxz=np.max(self.data['zbbbs'][0])
       return (maxz-minz)/(maxr-minr)
-    
+
     def get_delta(self):
       """
       Return dshape parameter
@@ -508,20 +508,20 @@ class geqdsk_dk(Geqdsk):
       maxr=np.max(self.data['rbbbs'][0])
       acenter = (minr+maxr)*0.5
       a       = (maxr-minr)/2.
-      
+
       minz=np.min(self.data['zbbbs'][0])
       c_ind = np.where(self.data['zbbbs'][0] == minz)
       cr = self.data['rbbbs'][0][c_ind]
       c =np.abs( acenter - cr)
-      
+
       maxz=np.max(self.data['zbbbs'][0])
       c_ind = np.where(self.data['zbbbs'][0] == maxz)
       dr = self.data['rbbbs'][0][c_ind]
       d  = np.abs(acenter - dr)
-    
+
       return (c+d)/2./a
-    
-    
+
+
     def get_a(self):
       """
       Return minor radius of last closed flux surface along R direction
@@ -529,8 +529,8 @@ class geqdsk_dk(Geqdsk):
       minr=np.min(self.data['rbbbs'][0])
       maxr=np.max(self.data['rbbbs'][0])
       return (maxr-minr)/2
-    
-    def get_q95(self):       
+
+    def get_q95(self):
       """
       Return q value of of 95% psi value
       """
@@ -540,45 +540,45 @@ class geqdsk_dk(Geqdsk):
       f   = interpolate.interp1d(psi,q,kind='cubic')
       psi95 = np.min(psi)+(np.max(psi)-np.min(psi))*0.95
       return f(psi95)
-    
+
     def q_inter(self, psi,der=0):
       """
       Return q value at a given normalized psi value or its derivative.
       Its derivative is dq/dpsi not dq/dpsi_normal
       optional keyword der = 0 : q value
                              1 : 1st derivative
-                             2 : 2nd derivative  
+                             2 : 2nd derivative
       """
       return interpolate.splev(psi,self.data['q_inter'],der=der)/self.data['delpsi'][0]**der
-    
+
     def q_RZ(self,R,Z):
         """
         Return q value at a given R and Z position
         """
         psi_N = self.f_normal(R,Z)
         return self.q_inter(psi_N);
-    
+
     def q_root_inter(self, qval):
       """
       Return psi value at a given q value.
       """
       return interpolate.splev(qval,self.data['q_root_inter'])
-    
-    
+
+
     def g_inter(self, psi,der=0):
       """
       Return g value at a given normalized psi value
       Its derivative is dg/dpsi not dg/dpsi_normal
       optional keyword der = 0 : q value
                              1 : 1st derivative
-                             2 : 2nd derivative  
+                             2 : 2nd derivative
       """
       return interpolate.splev(psi,self.data['g_inter'],der=der)/self.data['delpsi'][0]**der
-    
+
     def B_field(self,R,Z,cyclic=False):
       """
       Return BR, BZ value at a given R, Z position.
-      B   = grad psi * grad phi - g grad phi 
+      B   = grad psi * grad phi - g grad phi
       """
       if not self.psi_inter:
          f = self.get_psi();
@@ -590,22 +590,22 @@ class geqdsk_dk(Geqdsk):
          BT = -self.g_inter(psi_RZ)
       else:
          BT = -self.data['bcentr'][0]*self.data['rcentr'][0]
-    
+
       BR = -self.f(R,Z,dy=1)[0]
       BZ =  self.f(R,Z,dx=1)[0]
-    
+
       if cyclic:
           return np.array([BR, BT, BZ])/R
-      else: 
+      else:
           return np.array([BR, BZ, BT])/R
-    
-    
+
+
     def B_theta(self,R,Z):
         """
         Return Btheta value at a given R,Z position
         """
         return 1./R * np.sqrt( self.f(R,Z,dy=1)[0]**2 + self.f(R,Z,dx=1)[0]**2)
-        
+
     def Bxyz(self,x,y,z):
         """
         Return bx, by, and bz at the x,y,z coordinate
@@ -619,7 +619,7 @@ class geqdsk_dk(Geqdsk):
         bz    = Bvec[1];
         #print 'br,bphi,cos,sin',Bvec[0],Bvec[2],np.cos(phi),np.sin(phi)
         return np.array([bx,by,bz])
-    
+
     def local_pitch(self,R,Z):
         """
         Return local pitch defined as Bt/Bp
@@ -628,7 +628,7 @@ class geqdsk_dk(Geqdsk):
         Bp    = np.sqrt(B[0]**2+B[1]**2)
         Bt    = B[2]
         return Bt/Bp
-    
+
     def get_ext_lim(self,rat):
         """
         Return limiter shape
@@ -656,8 +656,8 @@ class geqdsk_dk(Geqdsk):
         if Rs.shape != Zs.shape :
             print "Rs and Zs has different dimension"
             return 0;
-    
-        for i in range(Rs.shape[0]): 
+
+        for i in range(Rs.shape[0]):
             psis += [self.f(Rs[i],Zs[i])[0]];
         return np.array(psis);
     def B_fields(self,Rs,Zs):
@@ -670,11 +670,11 @@ class geqdsk_dk(Geqdsk):
         if Rs.shape != Zs.shape :
             print "Rs and Zs has different dimension"
             return 0;
-    
-        for i in range(Rs.shape[0]): 
+
+        for i in range(Rs.shape[0]):
             Br, Bz, Bphi  = self.B_field(Rs[i],Zs[i]);
             Brs += [Br]; Bzs += [Bz] ; Bphis += [Bphi]
-    
+
         return np.array(Brs), np.array(Bzs), np.array(Bphis);
     def B_FILD(self):
         """
@@ -698,15 +698,15 @@ class geqdsk_dk(Geqdsk):
         bR = BR/B;
         bZ = BZ/B;
         if idebug:
-            print bR, bZ, BR, BZ 
+            print bR, bZ, BR, BZ
             print GradPsi_R, GradPsi_Z
         GradPsi = np.sqrt(GradPsi_R**2 + GradPsi_Z**2);
         GradPsi_pa = bR * GradPsi_R + bZ*GradPsi_Z;
-        if idebug: 
+        if idebug:
             return GradPsi_pa,np.sqrt(GradPsi**2 - GradPsi_pa**2);
-        else: 
+        else:
             return np.sqrt(GradPsi**2 - GradPsi_pa**2);
-      
+
     def in_SOL(self,R,Z):
         if self.psi_inter_normal:
             psiv = self.f_normal(R,Z)[0];
@@ -723,9 +723,9 @@ class geqdsk_dk(Geqdsk):
           rbbbs = self.data['rbbbs'][0];
           zbbbs = self.data['zbbbs'][0];
           rs = []; zs = [];
-    
+
           for i in range(len(zbbbs)):
-              if(rbbbs[i] > self.data['rmaxis'][0] and 
+              if(rbbbs[i] > self.data['rmaxis'][0] and
                       -0.5 <= zbbbs[i] <= 0.5 ):
                   rs += [rbbbs[i]];
                   zs += [zbbbs[i]];
@@ -733,9 +733,9 @@ class geqdsk_dk(Geqdsk):
           zs = np.array(zs)
           self.f_zs = interpolate.interp1d(zs,rs,kind='cubic')
         return self.f_zs(self.data['zmaxis'][0]);
-       
-    
-    def psiN_RZ(self, psiN): 
+
+
+    def psiN_RZ(self, psiN):
         if not self.psi_inter_normal:
             self.get_psi_normal();
         def f_psiN(R):
@@ -761,12 +761,12 @@ class geqdsk_dk(Geqdsk):
 
     def EquiB_package_for_dk(self,R,Z):
         """
-        Equilibrium values calculator for drift equation 
+        Equilibrium values calculator for drift equation
         input: R, Z
-        output: Dictionary 
-            data['B']       : Absolute B value        
-            data['Bvec']    : Bvec ( Br, Bphi, Bz) 
-            data['b']       : Bvec/B       
+        output: Dictionary
+            data['B']       : Absolute B value
+            data['Bvec']    : Bvec ( Br, Bphi, Bz)
+            data['b']       : Bvec/B
             data['curl_b']  : Curl B
             data['Grad_B']  : Grad B
             data['Grad_B_cross_b']  : Grad B x b
@@ -811,7 +811,7 @@ class geqdsk_dk(Geqdsk):
         """
         B = self.B_field(R,Z)
         return np.array([B[0],B[2],B[1]])/np.sqrt(B.dot(B))
-    
+
     def B_abs(self,R,Z):
         """
         B value
@@ -914,7 +914,7 @@ class geqdsk_dk(Geqdsk):
         """
         from plasma_basic import mu0
         return self.Curl_B(R,Z)/mu0
-    
+
     def Curvature(self,R,Z):
         """
         Magnetic field curvature b dot nabla b
@@ -955,7 +955,7 @@ class geqdsk_dk(Geqdsk):
 
     def b_X_Grad_lnB(self,R,Z):
         """
-        vector component for Grad B drift 
+        vector component for Grad B drift
         b x Grad B / B
         input: R, Z
         output: vector components
@@ -987,9 +987,9 @@ class geqdsk_dk(Geqdsk):
         R : R position
         Z : Z position
         E : Energy in eV unit
-        Lambda : v||^2 / v^2 
+        Lambda : v||^2 / v^2
 
-        return 
+        return
             np.array(vR, vphi,vZ)
         """
         v    = pb.ev2ve(E);
@@ -1009,7 +1009,7 @@ class geqdsk_dk(Geqdsk):
 
     def sample_density(self,rho,a=2.,b=2.2):
         """
-        sample density profile 
+        sample density profile
         rho is normalized poloidal flux
         """
         if 1.>=rho >=0.:
@@ -1035,7 +1035,7 @@ class geqdsk_dk(Geqdsk):
             return 1.e10,0.,0.
 
     def Grad_Theta(self,R,Z,dt=None):
-        if(dt == None): 
+        if(dt == None):
             dt = 1.e-4;
         Rax = self.data['rmaxis'][0];
         Zax = self.data['zmaxis'][0];
@@ -1113,12 +1113,12 @@ class geqdsk_dk(Geqdsk):
 
     def psin_RZ(self,psi_n, ns = 300):
         """
-        Calculateor R, Z value having psi_n on the line from (Rmaxis, Zmaxis) 
+        Calculateor R, Z value having psi_n on the line from (Rmaxis, Zmaxis)
             to (maximum R_lcfs, Zmaxis)
-        input 
+        input
             psi_n: normalized psi value from 0 to 1
             ns  : number of grids of the line from Axis to boundary
-        return 
+        return
             the value of [R, Z] having psi_n
         """
         if psi_n <=0.:
@@ -1131,12 +1131,12 @@ class geqdsk_dk(Geqdsk):
         Z0 = self.get('zmaxis');    #magnetic axis Z
         Rmax = self.get('rbbbs').max();  #maximum R
 
-        r = np.linspace(R0,Rmax, ns); 
+        r = np.linspace(R0,Rmax, ns);
         r_psi = np.zeros(ns);
         for i in range(ns):
             r_psi[i] = f(r[i],Z0);
         r_inter_psi = interpolate.interp1d(r, r_psi - psi_n, kind = 'cubic')
-        try: 
+        try:
             rv = brentq(r_inter_psi, R0, Rmax);
         except:
             print "Error finding flux surface"
@@ -1164,10 +1164,10 @@ class geqdsk_dk(Geqdsk):
         return np.arccos(ab/(a*b));
 
 
-    def polyg(self, psi_n, ndphi = 100):   
+    def polyg(self, psi_n, ndphi = 100):
         """
         Calculation of polygon consisting flux surface
-        input 
+        input
             psi_n:normalized psi value which we want to know
             ndphi: between points toroidal angle
         return flux surface R, Z
@@ -1182,7 +1182,7 @@ class geqdsk_dk(Geqdsk):
         dphi = np.pi*2./float(ndphi)
         theta_rot = 0.;
 
-        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False, 
+        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False,
                 max_step = 100000);
 
         r.set_initial_value([Ro,Zo],0.);
@@ -1196,7 +1196,7 @@ class geqdsk_dk(Geqdsk):
             theta_rot += np.abs(dtheta);
             R0, Z0 = R1, Z1;
             yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t])));
-        if theta_rot == 2.*np.pi: 
+        if theta_rot == 2.*np.pi:
             return yi;
         else:
             return np.vstack((yi[0:-1,:],np.array([Ro,Zo,r.t])));
@@ -1269,7 +1269,7 @@ class geqdsk_dk(Geqdsk):
         dpsi_Z = self.psi(R,Z,dy=1)[0];
         return np.sqrt(dpsi_R**2 + dpsi_Z**2);
 
-    def Closed_Lines(self,qv,the0,ndphi = 1000): 
+    def Closed_Lines(self,qv,the0,ndphi = 1000):
         """
         closed field line
         inputs
@@ -1287,7 +1287,7 @@ class geqdsk_dk(Geqdsk):
             return 1
         else:
             pass
-        psiv = self.q_root_inter(qv) 
+        psiv = self.q_root_inter(qv)
         R0 = self.psiN_RZ(psiv);
         Z0 = self.get('zmaxis');
 
@@ -1297,7 +1297,7 @@ class geqdsk_dk(Geqdsk):
         theta_rot = 0.;
 
         #initialization of ode solver
-        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False, 
+        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False,
                 max_step = 100000);
         r.set_initial_value([R0,Z0],0.);
 
@@ -1324,9 +1324,9 @@ class geqdsk_dk(Geqdsk):
 
         """
 
-        if(RZpos == None): 
-            R0   = self.psiN_RZ(psiN); 
-            Z0   = self.data['zmaxis'][0]; 
+        if(RZpos == None):
+            R0   = self.psiN_RZ(psiN);
+            Z0   = self.data['zmaxis'][0];
             phi0 = 0.;
             v    = pb.ev2vi(E,mass);
             vpa  = v*np.sqrt(Lambda)*sigma;
@@ -1396,7 +1396,7 @@ class geqdsk_dk(Geqdsk):
 
             #End condition check
             if(RZpos == None):
-                if not Is_Toroidal:  
+                if not Is_Toroidal:
                     theO = theN;
                     theN = np.arctan2(r.y[2]-Zm,r.y[0]-Rm);
                     Inds += 1;
@@ -1414,8 +1414,8 @@ class geqdsk_dk(Geqdsk):
                 if(dS <=5.e-3 and theN>=theI and SS > 1.):
                     print theN, theI
                     Sig = 2;
-                
-                
+
+
 
         yi = np.array(yi)
         Omeg = np.array(Omeg);
@@ -1425,7 +1425,7 @@ class geqdsk_dk(Geqdsk):
         dZ = yi[-1,2]-yi[-2,2];
         dV = yi[-2,3]-yi[-2,3];
         dr = (Z0-yi[-2,2])/dZ;
-        
+
         Re = yi[-2,0]+dR*dr;
         pe = yi[-2,1]+dp*dr;
         Ve = yi[-2,3]+dV*dr;
@@ -1505,7 +1505,7 @@ class geqdsk_dk(Geqdsk):
             Omegad = np.dot(Vd,dzeta-q*dtheta);
 
             #End condition check
-            if not Is_Toroidal:  
+            if not Is_Toroidal:
                 theO = theN;
                 theN = np.arctan2(r.y[2]-Zm,r.y[0]-Rm);
                 Inds += 1;
@@ -1525,7 +1525,7 @@ class geqdsk_dk(Geqdsk):
         dZ = yi[-1,2]-yi[-2,2];
         dV = yi[-2,3]-yi[-2,3];
         dr = (Zm-yi[-2,2])/dZ;
-        
+
         Re = yi[-2,0]+dR*dr;
         pe = yi[-2,1]+dp*dr;
         Ve = yi[-2,3]+dV*dr;
@@ -1553,9 +1553,9 @@ class geqdsk_dk(Geqdsk):
         here dt is 0.01/f where f is cyclotron frequency
         """
 
-        if(RZpos == None): 
-            R0   = self.psiN_RZ(psiN); 
-            Z0   = self.data['zmaxis'][0]; 
+        if(RZpos == None):
+            R0   = self.psiN_RZ(psiN);
+            Z0   = self.data['zmaxis'][0];
             phi0 = 0.;
             v    = pb.ev2vi(E,mass);
             vpa  = v*np.sqrt(Lambda)*sigma;
@@ -1620,7 +1620,7 @@ class geqdsk_dk(Geqdsk):
 
 
 
-        
+
 if __name__ == '__main__':
     #from pylab import *
     polyg_test = False
@@ -1719,5 +1719,3 @@ if __name__ == '__main__':
         plt.show()
 
     plt.show()
-
-
