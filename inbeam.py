@@ -25,7 +25,7 @@ def write_inbeam(nmod, xf, xpoldeg, xzb, xxb):
         inbeam['nabsroutine'] = 0 # %
         inbeam['noout'] = 0 # % screen out (0)
         inbeam['nmod'] = nmod # % mode selection: O-mode (1), X-mode (-1)
-        inbeam['xf'] = xf # % wave frequency om=2*pi*xf kstar
+        inbeam['xf'] = xf # % frequency om=2*pi*xf kstar
         inbeam['xtordeg'] = 0.00000 # % geom. optics injection angle
         inbeam['xpoldeg'] = -xpoldeg # % geom. optics injection angle (- : up, + : down)
         inbeam['xxb'] = xxb # % beam launching position [cm] for tracing calc. kstar
