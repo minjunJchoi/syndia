@@ -12,7 +12,7 @@
 import numpy as np
 import h5py
 
-DIR = '/home/mjchoi/KSTAR/ECEI_data/'
+DIR = 'data/'
 ENUM = 5000000  # totla number of samples in an ECEI channel
 VN = 24  # number of vertical arrays
 
@@ -151,7 +151,6 @@ class KstarEcei(object):
 
     def channel_position(self, shot, dev, clist):
         # set self.rpos, self.zpos, self.apos
-
         if shot < 19392:
             fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
             cnidx1 = 6
@@ -164,9 +163,9 @@ class KstarEcei(object):
             dset = f['ECEI']
             bt = dset.attrs['TFcurrent']*0.0995556  # [kA] -> [T]
             mode = dset.attrs['Mode']
-            if mode is 'O':
+            if 'O' in mode:
                 hn = 1  # harmonic number
-            elif mode is 'X':
+            elif 'X' in mode:
                 hn = 2
             lo = dset.attrs['LoFreq']
 
@@ -283,3 +282,7 @@ def beam_path(shot, dev, rpos, vn):
         apos = za[1][vn-1]  # angle [rad] positive means the (z+) up-directed (divering from array to plasma)
 
         return zpos, apos
+
+k = KstarEcei()
+k.channel_position(13728, 'G', ['ECEI_G1208'])
+print k.rpos, k.zpos, k.apos

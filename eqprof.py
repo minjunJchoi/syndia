@@ -7,17 +7,15 @@ import matplotlib.pyplot as plt
 geqdsk_fn = "data/g013728.003900"
 ne_fn = "data/ne_3900.dat"
 Te_fn = "data/Te_3900.dat"
-Rmin = 1.2 # [m]
-Rmax = 2.4 # [m]
-zmin = -0.5 # [m]
-zmax = 0.5 # [m]
-ds = 0.01 # [m]
-
-
 ## set 2D coordinate
-R1d = np.arange(Rmin, Rmax, ds)
-z1d = np.arange(zmin, zmax, ds)
-R2d, z2d = np.meshgrid(R1d, z1d)
+# Rmin = 1.2 # [m]
+# Rmax = 2.4 # [m]
+# zmin = -0.5 # [m]
+# zmax = 0.5 # [m]
+# ds = 0.01 # [m]
+# R1d = np.arange(Rmin, Rmax, ds)
+# z1d = np.arange(zmin, zmax, ds)
+# R2d, z2d = np.meshgrid(R1d, z1d)
 # R2d[0,:]
 # z2d[:,0] # -> row vector; if you want a column vector, z2d[:,[0]]
 
@@ -45,7 +43,23 @@ def F_B(R, z):
     else:
         B = geq.B_abs(R, z)
     return B
-    # return geq.B_abs(R,z)
+
+# Bvec = [Br, Bz, Bt]
+def F_Bvec(R, z):
+    if type(R) is np.ndarray:
+        Bvec = np.zeros((3,) + R.shape)
+        it = np.nditer(R, flags=['multi_index'], op_flags=['readonly'])
+        while not it.finished:
+            idx = it.multi_index
+            B_field = geq.B_field(R[idx], z[idx])
+            Bvec[0,idx] = B_field[0]
+            Bvec[1,idx] = B_field[1]
+            Bvec[2,idx] = B_field[2]
+            it.iternext()
+    else:
+        Bvec = geq.B_field(R, z)
+    # Bvec = geq.B_fields(R, z)
+    return Bvec
 
 # psin = f(R, z) ######################## fix ?
 def F_psin(R, z):
@@ -91,7 +105,15 @@ def F_Te(R, z):
 # R = np.arange(1.8,2.0,0.01)
 # z = np.arange(0.1,0.3,0.01)
 # print F_B(R,z)
+# Bvec = F_Bvec(R,z)
+# print Bvec.shape
+# B = np.sqrt(np.sum(Bvec * Bvec, axis=0))
+# print B
+
+# print np.sqrt(F_Bvec(R[0],z[0]).dot(F_Bvec(R[0],z[0])))
+# print F_Bvec(R[0],z[0])
+# print np.sqrt(F_Bvec(R,z).dot(F_Bvec(R,z)))
 # print F_ne(R,z)
 # print F_Te(R,z)
-psin = np.arange(0.1,0.2,0.01)
-print F_Te_psin(psin)
+# psin = np.arange(0.1,0.2,0.01)
+# print F_Te_psin(psin)
