@@ -1,7 +1,10 @@
+# ece intensity forward modeling
+
 from vbp import vac_beam_path
 from inbeam import write_inbeam
 from pfunc import *
 import subprocess
+import math
 # def radiation_temperature(self, shot, dev, clist):
 
 TB_path = "/home/users/mjchoi/torbeam_ifortran/"
@@ -54,10 +57,11 @@ with h5py.File(fname, 'r') as f:
 
 ## loop for channels
 cnum = len(clist)
+intmeas = np.zeros(cnum) # ECE intensity measured
 radtemp = np.zeros(cnum) # radiation temperature [keV] of each channel
-rpos = np.zeros(cnum)  # R [m] of each channel
-zpos = np.zeros(cnum)  # z [m] of each channel
-apos = np.zeros(cnum)  # angle [rad] of each channel
+Rch = np.zeros(cnum)  # R [m] of each channel
+zch = np.zeros(cnum)  # z [m] of each channel
+ach = np.zeros(cnum)  # angle [rad] of each channel
 dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
 for c in range(0, cnum):
     vn = int(clist[c][(cnidx1):(cnidx1+2)])
@@ -86,22 +90,41 @@ for c in range(0, cnum):
                 zp = zp/100 # z [m] beam path
                 # it can be curved and get double values. Find the first resonance position
 
-            ## Find the proper range
+            # find the proper range
             for i in range(Rp.size): # increasing during loop
                 fRz = wce(Rp[i], zp[i])/(2*np.pi*1e9)*hn # EC frequency [GHz]
                 if np.abs(fs[j] + pend - fRz) < 0.3:
-                    idx2 = j # no need to be very accurate
+                    idx1 = j # no need to be very accurate
                 if np.abs(fs[j] - fRz) < 0.3:
                     Rcold = Rp[i] # EC resonance position [cm] no need to be accurate
                 if np.abs(fs[j] + pstart - fRz) < 0.3:
-                    idx1 = j # no need to be very accurate
+                    idx2 = j # no need to be very accurate
                     break
 
+            # Rp, zp between idx1 idx2; calculate angle between emission direction and B-field
+            Rp = Rp[idx1:(idx2+1)]
+            zp = zp[idx1:(idx2+1)]
+            theta = np.zeros(Rp.size)
+            for i in range(1,Rp.size):
+                Rvec = [-(Rp[i]-Rp[i-1]), -(zp[i]-zp[i-1]), 0] # opposite direction for emission path
+                Bvec = F_Bvec(Rp[i], zp[i])
+                theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
+
+            # interpolation (for better accuracy) and change direction from hfs to lfs
+            idx = np.range(idx2, idx1-1, -1)
+            nidx = np.range(idx2, idx1, -pint)
+            fRp = interpolate.interp1d(idx, Rp[idx], kind='linear')
+            fzp = interpolate.interp1d(idx, zp[idx], kind='linear')
+            fth = interpolate.interp1d(idx, theta[idx], kind='linear')
+            Rp = fRp(nidx)
+            zp = fzp(nidx)
+            theta = fth(nidx)
+
+            # calculate ECE intensity along path
 
 
-
-
-
-    # obtain beam path of each sub ray; saved in list using .append
-    Rp = []
-    zp = []
+            #
+            intmeas[c]
+            radtemp[c]
+            Rch[c]
+            zch[c]
