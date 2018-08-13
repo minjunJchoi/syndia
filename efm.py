@@ -1,7 +1,9 @@
 # ece intensity forward modeling
+import math
+import matplotlib.pyplot as plt
 
 from vbp import vac_beam_path
-import math
+from bpath import beam_path
 # def radiation_temperature(self, shot, dev, clist):
 
 shot = 13728
@@ -71,7 +73,7 @@ for c in range(0, cnum):
 
         for j in range(fs.size):
             # find beam path
-    beam_path(hn, fs[j], as[i], zs[i], R_vac_end) # [GHz], [rad], [m], [m]
+            Rp, zp, theta = beam_path(hn, fs[j], as[i], zs[i], R_vac_end, pstart, pend, pint) # [GHz], [rad], [m], [m]
 
             # calculate ECE intensity along path
 
@@ -86,3 +88,6 @@ print dz
 print fs
 print zs
 print as
+
+plt.plot(Rp, zp)
+plt.show()

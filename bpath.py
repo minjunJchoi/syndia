@@ -54,5 +54,4 @@ def beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
     zp = fzp(nidx)
     theta = fth(nidx)
 
-
-beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint)
+    return Rp, zp, theta
