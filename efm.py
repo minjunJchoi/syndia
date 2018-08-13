@@ -27,12 +27,12 @@ pstart = 7.5 # [GHz] cal start point (hfs) = cold resonance + pstart
 pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
 pint = 0.1 # ECE integration path inter step. 0.1 = 10%
 
-R_vac_end = 2.39 # where vacuum region ends and plasma region starts
+Rinit = 2.39 # where vacuum region ends and plasma region starts
 
 
 ## shot information
 if shot < 19392:
-    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
+    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}fsub.h5".format(DIR, shot, shot, dev)
     cnidx1 = 6
 else:
     fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
@@ -63,17 +63,17 @@ for c in range(0, cnum):
     fn = int(clist[c][(cnidx1+2):(cnidx1+4)])
 
     # define sub rays
-    fs = np.linspace((fn-1)*0.9 + 2.6 + lo + fstart, (fn-1)*0.9 + 2.6 + lo + fend, Nf) # frequency [GHz] of sub rays
-    zs = np.zeros(dz.size)
-    as = np.zeros(dz.size)
+    fsub = np.linspace((fn-1)*0.9 + 2.6 + lo + fstart, (fn-1)*0.9 + 2.6 + lo + fend, Nf) # frequency [GHz] of sub rays
+    zsub = np.zeros(dz.size)
+    asub = np.zeros(dz.size)
     ## loop over sub rays of a single channel
     for i in range(dz.size):
-        # vacuum approximation until R_vac_end
-        zs[i], as[i] = vac_beam_path(shot, dev, R_vac_end, vn, dz[i]) # vertical position [m] and rangle [rad] of sub rays at R_vac_end
+        # vacuum approximation until Rinit
+        zsub[i], asub[i] = vac_beam_path(shot, dev, Rinit, vn, dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
 
-        for j in range(fs.size):
+        for j in range(fsub.size):
             # find beam path
-            Rp, zp, theta = beam_path(hn, fs[j], as[i], zs[i], R_vac_end, pstart, pend, pint) # [GHz], [rad], [m], [m]
+            Rp, zp, theta = beam_path(hn, fsub[j], asub[i], zsub[i], Rinit, pstart, pend, pint) # [GHz], [rad], [m], [m]
 
             # calculate ECE intensity along path
 
@@ -85,9 +85,9 @@ for c in range(0, cnum):
             # zch[c]
 
 print dz
-print fs
-print zs
-print as
+print fsub
+print zsub
+print asub
 
 plt.plot(Rp, zp)
 plt.show()
