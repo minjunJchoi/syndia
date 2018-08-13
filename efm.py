@@ -6,9 +6,10 @@ from vbp import vac_beam_path
 from bpath import beam_path
 # def radiation_temperature(self, shot, dev, clist):
 
+data_path = '/eceidata/exp_2015/'
 shot = 13728
 dev = 'G'
-clist = 'ECEI_G1208'
+clist = 'ECEI_G0101'
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -32,10 +33,10 @@ Rinit = 2.39 # where vacuum region ends and plasma region starts
 
 ## shot information
 if shot < 19392:
-    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}fsub.h5".format(DIR, shot, shot, dev)
+    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(data_path, shot, shot, dev)
     cnidx1 = 6
 else:
-    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
+    fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(data_path, shot, shot, dev)
     cnidx1 = 7
 
 with h5py.File(fname, 'r') as f:
