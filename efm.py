@@ -92,5 +92,3 @@ print fsub
 print zsub
 print asub
 
-plt.plot(Rp, zp)
-plt.show()

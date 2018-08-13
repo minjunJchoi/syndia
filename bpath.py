@@ -1,8 +1,12 @@
 import subprocess
 from scipy import interpolate
+import math
 
 from inbeam import write_inbeam
 from pfunc import *
+
+e = 1.602*1e-19
+me = 9.109*1e-31
 
 TB_path = "/home/users/mjchoi/torbeam_ifortran/"
 TB_path_run = "/home/users/mjchoi/torbeam_ifortran/run_torbeam/"
@@ -28,11 +32,11 @@ def beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
     for i in range(Rp.size): # increasing during loop
         fRz = wce(Rp[i], zp[i])/(2*np.pi*1e9)*hn # EC frequency [GHz]
         if np.abs(freq + pend - fRz) < 0.3:
-            idx1 = j # no need to be very accurate
+            idx1 = i # no need to be very accurate
         if np.abs(freq - fRz) < 0.3:
             Rcold = Rp[i] # EC resonance position [cm] no need to be accurate
         if np.abs(freq + pstart - fRz) < 0.3:
-            idx2 = j # no need to be very accurate
+            idx2 = i # no need to be very accurate
             break
 
     # Rp, zp between idx1 idx2; calculate angle between emission direction and B-field
@@ -40,13 +44,15 @@ def beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
     zp = zp[idx1:(idx2+1)]
     theta = np.zeros(Rp.size)
     for i in range(1,Rp.size):
-        Rvec = [-(Rp[i]-Rp[i-1]), -(zp[i]-zp[i-1]), 0] # opposite direction for emission path
+        Rvec = np.array([-(Rp[i]-Rp[i-1]), -(zp[i]-zp[i-1]), 0]) # opposite direction for emission path
         Bvec = F_Bvec(Rp[i], zp[i])
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
 
     # interpolation (for better accuracy) and change direction from hfs to lfs
-    idx = np.range(idx2, idx1-1, -1)
-    nidx = np.range(idx2, idx1, -pint)
+    #idx = np.arange(idx2, idx1-1, -1)
+    #nidx = np.arange(idx2, idx1, -pint)
+    idx = np.arange(Rp.size-1,-1,-1)
+    nidx = np.arange(Rp.size-1,0,-pint)
     fRp = interpolate.interp1d(idx, Rp[idx], kind='linear')
     fzp = interpolate.interp1d(idx, zp[idx], kind='linear')
     fth = interpolate.interp1d(idx, theta[idx], kind='linear')

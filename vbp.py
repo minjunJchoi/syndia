@@ -1,6 +1,8 @@
 import h5py
+import numpy as np
 
 data_path = '/eceidata/exp_2015/'
+VNT = 24
 
 def vac_beam_path(shot, dev, rpos, vn, dz):
     # IN : shot, device name, R posistion [m], vertical channel number
@@ -22,7 +24,7 @@ def vac_beam_path(shot, dev, rpos, vn, dz):
         rpos = rpos*1000  # [m] -> [mm] # for rpos = [1600:50:2300]
 
         # ABCD matrix for LFS, HFS, GFS
-        if dev is 'L' or 'GR':
+        if dev == 'L' or dev == 'GR':
             sp = 3350 - rpos
 
             abcd = np.array([[1,250+sp],[0,1]]).dot(
@@ -42,7 +44,7 @@ def vac_beam_path(shot, dev, rpos, vn, dz):
                    np.array([[1,90],[0,1]])).dot(
                    np.array([[1,0],[(1-1.52)/(1270*1.52),1/1.52]])).dot(
                    np.array([[1,539+35+sf],[0,1]]))
-        elif dev is 'H' or 'HT':
+        elif dev == 'H' or dev == 'HT':
             sp = 3350 - rpos
 
             abcd = np.array([[1,250+sp],[0,1]]).dot(
@@ -71,7 +73,7 @@ def vac_beam_path(shot, dev, rpos, vn, dz):
                    np.array([[1,70],[0,1]])).dot(
                    np.array([[1,0],[(1-1.52)/(1400*1.52),1/1.52]])).dot(
                    np.array([[1,446+35+sf],[0,1]]))
-        elif dev is 'G' or 'GT':
+        elif dev == 'G' or dev == 'GT':
             sp = 3150 - rpos
 
             abcd = np.array([[1,1350-sz+sp],[0,1]]).dot(
@@ -87,9 +89,11 @@ def vac_beam_path(shot, dev, rpos, vn, dz):
                    np.array([[1,80],[0,1]])).dot(
                    np.array([[1,0],[(1-1.545)/(800*1.545),1/1.545]])).dot(
                    np.array([[1,390],[0,1]]))
+            print 3
+            print abcd
 
         # vertical position from the reference axis (vertical center of all lens, z=0 line) at ECEI array box
-        zz = (np.arange(VN,0,-1) - 12.5)*14 + dz # [mm]
+        zz = (np.arange(VNT,0,-1) - 12.5)*14 + dz # [mm]
         # angle against the reference axis at ECEI array box
         aa = np.zeros(np.size(zz))
 
