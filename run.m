@@ -41,12 +41,12 @@ Rmax = 2.4; % [m]
 zmin = -0.5; % [m]
 zmax = 0.5; % [m]
 
-Nz = 5; % number of vertical rays for a single channel
-Nf = 5; % number of frequency rays for a single channel
-zstart = -10; % [mm] first ray at the mini lens -14
-zend = 10; % [mm] last ray at the mini lens 14
-fstart = -0.2; % [GHz] frequency bandwidth -0.3
-fend = 0.2; % [GHz] frequency bandwidth +0.3
+Nz = 1; % number of vertical rays for a single channel
+Nf = 1; % number of frequency rays for a single channel
+zstart = 0; % [mm] first ray at the mini lens -14
+zend = 0; % [mm] last ray at the mini lens 14
+fstart = 0; % [GHz] frequency bandwidth -0.3
+fend = 0; % [GHz] frequency bandwidth +0.3
 
 pstart = -0.14; % [m] start point = cold resonance + pstart
 pend = 0.03; % [m] end point = cold resonance + pend
@@ -98,8 +98,8 @@ eq.Tefname = fullfile(eq.pdir, sprintf('Te_%d_smooth.mat',eq.tCur*1000));
 
 % choose device and channels : vacuum propagation 
 dn = 3;
-fidx = (1:8); % low 1--high 8 frerquency channel numbering
-zidx = (1:24); % low 1--high 24 vertical channel numbering
+fidx = 1; % low 1--high 8 frerquency channel numbering
+zidx = 1; % low 1--high 24 vertical channel numbering
 
 Lcz = 9; % gaussian optics coupling e^2-fallding distance [mm] 
 Bcf = 0.3; % gaussian optics coupling e^2-fallding distance [GHz] 
@@ -148,6 +148,7 @@ else
     load(outputf,'fidx','zidx','fs','dz','Rp','zp','theta');
 end
 
+return
 %% YOU CAN ADD PERTURBATION HERE FOR FAST CALCULATION %%
 %%%% YOU CAN ADD PERTURBATION HERE FOR FAST CALCULATION %%%%
 
