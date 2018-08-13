@@ -1,3 +1,5 @@
+import h5py
+
 data_path = '/eceidata/exp_2015/'
 
 def vac_beam_path(shot, dev, rpos, vn, dz):
