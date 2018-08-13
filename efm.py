@@ -1,4 +1,5 @@
 # ece intensity forward modeling
+import h5py
 import math
 import matplotlib.pyplot as plt
 
