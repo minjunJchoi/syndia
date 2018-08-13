@@ -7,7 +7,7 @@ from pfunc import *
 TB_path = "/home/users/mjchoi/torbeam_ifortran/"
 TB_path_run = "/home/users/mjchoi/torbeam_ifortran/run_torbeam/"
 
-## functions needed
+## functions needed maybe
 wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
 
 def beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
