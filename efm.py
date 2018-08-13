@@ -11,7 +11,7 @@ from bpath import beam_path
 data_path = '/eceidata/exp_2015/'
 shot = 13728
 dev = 'G'
-clist = 'ECEI_G0101'
+clist = ['ECEI_G0101']
 
 e = 1.602*1e-19
 me = 9.109*1e-31
