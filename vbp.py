@@ -1,3 +1,5 @@
+data_path = '/eceidata/exp_2015/'
+
 def vac_beam_path(shot, dev, rpos, vn, dz):
     # IN : shot, device name, R posistion [m], vertical channel number
     # OUT : a ray vertical position and angle at rpos [m] [rad]
@@ -5,9 +7,9 @@ def vac_beam_path(shot, dev, rpos, vn, dz):
     # ray starting from the array box posistion
 
     if shot < 19392:
-        fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
+        fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(data_path, shot, shot, dev)
     else:
-        fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
+        fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(data_path, shot, shot, dev)
 
     with h5py.File(fname, 'r') as f:
         # get attributes
