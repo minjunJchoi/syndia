@@ -25,7 +25,7 @@ Nf = 1 # number of frequency rays for a single channel
 fstart = 0 # [GHz] frequency bandwidth -0.3
 fend = 0 # [GHz] frequency bandwidth +0.3
 
-pstart = 7.5 # [GHz] cal start point (hfs) = cold resonance + pstart
+pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
 pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
 pint = 0.1 # ECE integration path inter step. 0.1 = 10%
 
@@ -86,7 +86,13 @@ for c in range(0, cnum):
             # Rch[c]
             # zch[c]
 
-print dz
-print fsub
-print zsub
-print asub
+#print dz
+#print fsub
+#print zsub
+#print asub
+
+print Rp
+print zp
+
+plt.plot(Rp,zp)
+plt.show()
