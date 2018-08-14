@@ -129,7 +129,7 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
     zm = np.mean(zp[midx])
     thm = np.mean(th[midx])
 
-    return ece_int, Rm, zm, thm, s, jms, ams
+    return ece_int, Rm, zm, thm, s, jms, ams, tau
 
 
 #ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(np.array([1.7]), np.array([-0.3]), np.array([0.1]), 87.6*1e9*2*np.pi, float(2)) # [m], [m], [rad], [rad/s], harmonic number

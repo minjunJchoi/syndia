@@ -2,6 +2,7 @@
 import numpy as np
 import h5py
 import math
+import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
 from bpath import vac_beam_path, tb_beam_path
@@ -89,7 +90,7 @@ for cn in range(0, cnum):
             Rp, zp, theta = tb_beam_path(hn, fsub[j], asub[i], zsub[i], Rinit, pstart, pend, pint) # [GHz], [rad], [m], [m]
 
             # calculate ECE intensity along path
-            ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn) # [m], [m], [rad], [rad/s], harmonic number
+            ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn) # [m], [m], [rad], [rad/s], harmonic number
 
             print 'ece_int Iece = {:g}'.format(ece_int)
             print 'Rm = {:g}'.format(Rm)
@@ -118,6 +119,12 @@ for cn in range(0, cnum):
     print 'imeas = {:g}'.format(int_meas[cn])
     print 'rad_temp = {:g}'.format(rad_temp[cn])
     print 'abs_temp = {:g}'.format(abs_temp[cn])
+
+plt.plot(s,tau)
+plt.show()
+
+ece_int = integrate.simps(jms,x=s)
+print ece_int
 
 #print dz
 #print fsub
