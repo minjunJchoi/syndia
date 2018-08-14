@@ -24,6 +24,7 @@ args = "{}readeqdsk<{}".format(TB_path_eq, gfn)
 re = subprocess.check_output(args, shell=True)
 args = "mv topfile {}".format(TB_path_run)
 re = subprocess.check_output(args, shell=True)
+
 # save ne.dat for TORBEAM
 x = np.sqrt(psin_ne)
 y = ne
@@ -31,6 +32,7 @@ with open("{}ne.dat".format(TB_path_run), 'w') as f:
     f.write('{}\n'.format(x.size))
     for i in range(x.size):
         f.write('{} {}\n'.format(x[i], y[i]))
+
 # save Te.dat for TORBEAM
 x = np.sqrt(psin_Te)
 y = Te

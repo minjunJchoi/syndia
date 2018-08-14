@@ -84,7 +84,6 @@ za = ABCD*[zECEI; aECEI];
 zR = za(1,:)/1000; % [m] 
 aR = za(2,:); % [rad] % positive means the (z+) up-directed
 
-
 % plot(R*ones(size(zR)), zR, 'x'); hold on;
 % end
 

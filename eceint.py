@@ -121,6 +121,6 @@ intmeas = integrate.simps(jms,x=s)
 # Is = np.zeros(R.size)
 # for i in range(2,R.size):
 #     Is[i] = Is[i-1] + (ams[i-1]*Ibb(Rp[i-1],zp[i-1],omega) - ams[i-1]*Is[i-1])*ds[i]
-# %    Is(i) = Is(i-1) + (ams(i-1)*Ibb(Rp(i-1),zp(i-1),omega) - ams(i-1)*Is(i-1))/N2XCsq(Rp(i-1),zp(i-1),theta(i-1))*ds(i); %%%%%%%%%%%%%%%%%% Nsq effect on intensity
+# %    Is(i) = Is(i-1) + (ams(i-1)*Ibb(Rp(i-1),zp(i-1),omega) - ams(i-1)*Is(i-1))/N2XCsq(Rp(i-1),zp(i-1),theta(i-1))*ds(i); ################## Nsq effect on intensity
 # end
-# % Is = Is.*N2XCsq(Rp,zp,theta); %%%%%%%%%%%%%%%%%% Nsq effect on intensity
+# % Is = Is.*N2XCsq(Rp,zp,theta); ################## Nsq effect on intensity

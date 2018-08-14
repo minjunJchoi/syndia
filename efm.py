@@ -4,8 +4,7 @@ import h5py
 import math
 import matplotlib.pyplot as plt
 
-from vbp import vac_beam_path
-from bpath import beam_path
+from bpath import vac_beam_path, beam_path
 # def radiation_temperature(self, shot, dev, clist):
 
 data_path = '/eceidata/exp_2015/'
@@ -44,10 +43,10 @@ else:
 with h5py.File(fname, 'r') as f:
     # get attributes
     dset = f['ECEI']
-    mode = dset.attrs['Mode']
-    if 'O' in mode:
+    mode = dset.attrs['Mode'].strip()
+    if mode is 'O':
         hn = 1  # harmonic number
-    elif 'X' in mode:
+    elif mode is 'X':
         hn = 2
     lo = dset.attrs['LoFreq']
 
@@ -91,4 +90,3 @@ print dz
 print fsub
 print zsub
 print asub
-
