@@ -20,7 +20,7 @@ VNT = 24
 wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
 
 
-def beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
+def tb_beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
     ## TORBEAM
     # initial parameters
     write_inbeam(hn, freq*1e9, ainit/np.pi*180, zinit*100, Rinit*100)

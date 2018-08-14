@@ -26,7 +26,7 @@ wce = @(x,y) e*F_B(x,y)/me; % [rad/s]
 %% determine zs, as, fs of a selected single channel (zidx, fidx)
 
 Rinit = 2.39; % beam path calculation intiation point [m]
-dz = linspace(zstart,zend,Nz) % [mm] effective vertical range at mini lens
+dz = linspace(zstart,zend,Nz); % [mm] effective vertical range at mini lens
 zs = zeros(size(dz)); % [m]
 as = zeros(size(dz)); % [rad]
 for i = 1:length(dz)
@@ -35,9 +35,7 @@ for i = 1:length(dz)
     as(i) = aR(zidx);
 end
 
-fs = linspace((fidx-1)*0.9 + 2.6 + opt.LO(dn) + fstart, (fidx-1)*0.9 + 2.6 + opt.LO(dn) + fend, Nf) % [GHz]
-zs
-as
+fs = linspace((fidx-1)*0.9 + 2.6 + opt.LO(dn) + fstart, (fidx-1)*0.9 + 2.6 + opt.LO(dn) + fend, Nf); % [GHz]
 
 %% calculate
 

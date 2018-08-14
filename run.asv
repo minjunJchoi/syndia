@@ -209,12 +209,9 @@ for f = 1:length(fidx)
         Te(z,f)   = F_Te(Rch(z,f), zch(z,f)) / (1000*1.602*10^-19); % [keV]
         fprintf('##################### z %d - f %d Imeas done ################# \n', z, f)    
         
-        fprintf('Rch = %g \n', Rch(z,f))
-        fprintf('zch = %g \n', zch(z,f))
-        fprintf('Imeas = %g \n', Imeas(z,f))
-        fprintf('Trad = %g \n', Trad(z,f))
-        fprintf('Te = %g \n', Te(z,f))
-        
+                        fprintf('Iece = %g \n', Iece)
+                fprintf('Rm = %g \n', Rm)
+                fprintf('zm = %g \n', zm)
         toc
     end
 end
