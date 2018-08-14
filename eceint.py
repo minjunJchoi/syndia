@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import cmath
 import scipy.integrate as integrate
 
 from pfunc import *
@@ -34,25 +35,32 @@ mc2 = me*c**2
 
 #[Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, th, Rc, omega, m, F_B, F_Te, F_ne)
 
+# for verification with matlab code
+#F_B = lambda R,z: 3.16804
+#F_Te = lambda R,z: 1.81824e-16
+#F_ne = lambda R,z: 2.08039e+19
+
 def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic number
+    m = float(m)
+
     # characteristic frequencies
     wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
-    wpe = lambda R,z: np.sqrt( F_ne(R,z)*e**2/(eps*me) ) # [rad/s]
+    wpe = lambda R,z: np.sqrt(F_ne(R,z)*e**2/(eps*me)) # [rad/s]
 
     # characteristic functions
     zeta = lambda R,z: mc2/F_Te(R,z)/2
-    mu = lambda R,z,w: ( w/(m*wce(R,z)) )**2
+    mu = lambda R,z,w: (w/(m*wce(R,z)))**2
 
     # refractive index
     X = lambda R,z: ( wpe(R,z)/(m*wce(R,z)) )**2
     if m == 1: # O-mode
     #     Nperp2C = @(x,y,w) 1 - (wpe(x,y)./w).^2; % B(3.1.22)
-        N1OCsq = lambda R,z,th: 1 - X(R,z)*(1-X(R,z))/(1 - X(R,z) - np.sin(th)**2/(2*m**2) + np.sqrt((np.sin(th)**2/(2*m**2))**2 - (1 - X(R,z))*np.cos(th)**2/m**2))
-        N1OCre = lambda R,z,th: np.real(np.sqrt(N1OCsq(R,z,th)))
+        N1OCsq = lambda R,z,th: 1 - X(R,z)*(1-X(R,z))/(1 - X(R,z) - np.sin(th)**2/(2*m**2) + cmath.sqrt((np.sin(th)**2/(2*m**2))**2 - (1 - X(R,z))*np.cos(th)**2/m**2))
+        N1OCre = lambda R,z,th: (np.lib.scimath.sqrt(N1OCsq(R,z,th))).real
     elif m == 2: # X-mode
     #     Nperp2C = @(x,y,w) 1 - (wpe(x,y)./w).^2.*(w.^2 - wpe(x,y).^2)./(w.^2 - wce(x,y).^2 - wpe(x,y).^2); % B(3.1.12)
-        N2XCsq = lambda R,z,th: 1 - X(R,z)*(1-X(R,z))/(1 - X(R,z) - np.sin(th)**2/(2*m**2) - np.sqrt((np.sin(th)**2/(2*m**2))**2 - (1 - X(R,z))*np.cos(th)**2/m**2)) # H(5.2.48)
-        N2XCre = lambda R,z,th: np.real(np.sqrt(N2XCsq(R,z,th)))
+        N2XCsq = lambda R,z,th: 1 - X(R,z)*(1-X(R,z))/(1 - X(R,z) - np.sin(th)**2/(2*m**2) - cmath.sqrt((np.sin(th)**2/(2*m**2))**2 - (1 - X(R,z))*np.cos(th)**2/m**2)) # H(5.2.48)
+        N2XCre = lambda R,z,th: (np.lib.scimath.sqrt(N2XCsq(R,z,th))).real
 
     # absorption coefficient
     if m == 1: # O-mode
@@ -63,24 +71,27 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
         am = lambda R,z: e**2*F_ne(R,z)/(4*c*me*eps) * m**(2*m-1)/math.factorial(m-1) * (F_Te(R,z)/(2*mc2))**(m-1) # H(5.2.39)
 
         a2sq = lambda R,z,th: (1 + (1 - X(R,z))*N2XCre(R,z,th)**2*np.cos(th)**2/(1 - X(R,z) - N2XCre(R,z,th)**2*np.sin(th)**2)**2 \
-            *m**2*(1 - (m**2 -1)/m**2/X(R,z)*(1 - N2XCre(R,z,th)**2))**2)**2*np.sin(th)**2
+        * m**2*(1 - (m**2 -1)/m**2/X(R,z)*(1 - N2XCre(R,z,th)**2))**2)**2*np.sin(th)**2
+        
         b2sq = lambda R,z,th: (1 + (1 - X(R,z))/(1 - X(R,z) - N2XCre(R,z,th)**2*np.sin(th)**2) \
-            *m**2*(1 - (m**2 -1)/m**2/X(R,z)*(1 - N2XCre(R,z,th)**2))**2)**2*np.cos(th)**2
+        * m**2*(1 - (m**2 -1)/m**2/X(R,z)*(1 - N2XCre(R,z,th)**2))**2)**2*np.cos(th)**2
+
         eta2X = lambda R,z,th: N2XCre(R,z,th)**(2*m-3)*(m - 1)**2*(1 - (m+1)/m/X(R,z)*(1 - N2XCre(R,z,th)**2))**2 \
-            /((1 + np.cos(th)^2)*(a2sq(R,z,th) + b2sq(R,z,th))**(1/2)) # H(5.2.47)
+        / ((1 + np.cos(th)**2)*(a2sq(R,z,th) + b2sq(R,z,th))**(1.0/2.0)) # H(5.2.47)
 
         amX = lambda R,z,th: am(R,z) * eta2X(R,z,th) # H(5.2.54)
 
         amRz = lambda R,z,th: amX(R,z,th)
 
     # shape Maxwellian (relativistic + Doppler)
-    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
-    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
 
-    shape = lambda R,z,w,th: 2*np.pi*zeta(R,z)**(7/2)*w/(np.sqrt(np.pi)*(m*wce(R,z))**2) \
-        *integrate.quad(lambda ba: (1 - ba**2 - (1 - ba*np.cos(th))**2*mu(R,z,w))**2 \
-        *(1 - ba*np.cos(th))*np.exp(-zeta(R,z)*(1 - (1 - ba*np.cos(th))**2*mu(R,z,w))), \
-        ba1(R,z,w,th), ba2(R,z,w,th))[0]
+    # num integration results in some difference (compared to matlab code)
+    shape = lambda R,z,w,th: 2.0*np.pi*zeta(R,z)**(3.5)*w/(np.sqrt(np.pi)*(m*wce(R,z))**2.0) \
+        *integrate.quad(lambda ba: (1 - ba**2.0 - (1 - ba*np.cos(th))**2.0*mu(R,z,w))**2.0 \
+        *(1 - ba*np.cos(th))*np.exp(-zeta(R,z)*(1 - (1 - ba*np.cos(th))**2.0*mu(R,z,w))), \
+        ba1(R,z,w,th), ba2(R,z,w,th))[0]   
 
     # perfect blackbody intensity
     Ibb = lambda R,z,w: (w/(2*np.pi*c))**2*F_Te(R,z) # H(5.2.37)
@@ -90,7 +101,7 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
     ams = np.zeros(Rp.size)
     for i in range(Rp.size):
         if mu(Rp[i], zp[i], omega)*np.sin(th[i])**2 < 1: # the integral blows up with the imaginary beta
-            ams[i] = np.real(amRz(Rp[i], zp[i], th[i]))*np.real(shape(Rp[i], zp[i], omega, th[i]))
+            ams[i] = (amRz(Rp[i], zp[i], th[i])).real*(shape(Rp[i], zp[i], omega, th[i])).real
         else:
             ams[i] = 0
 
@@ -119,6 +130,9 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
     thm = np.mean(th[midx])
 
     return ece_int, Rm, zm, thm, s, jms, ams
+
+
+#ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(np.array([1.7]), np.array([-0.3]), np.array([0.1]), 87.6*1e9*2*np.pi, float(2)) # [m], [m], [rad], [rad/s], harmonic number
 
 # transfer intensity
 # Is = np.zeros(R.size)

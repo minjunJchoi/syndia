@@ -109,8 +109,9 @@ for c in range(0, cnum):
     zch[c] = zch[c] / S
 
     # radiation temperature
-    rad_temp[c] = int_meas[c] / (np.mean(fsub)*2*np.pi*1e9/(2*np.pi*c))**2 / (1000*e) # [keV]
-    abs_temp[c] = F_Te(Rch[c], zch[c]) / (1000*e) # [keV]
+    #rad_temp[c] = int_meas[c] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
+    rad_temp[c] = (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
+    abs_temp[c] = F_Te(Rch[c], zch[c]) / (1000.0*e) # [keV]
 
     print 'S = {:g}'.format(S)
     print 'Rch = {:g}'.format(Rch[c])
