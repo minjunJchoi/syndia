@@ -34,7 +34,7 @@ mc2 = me*c**2
 
 #[Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, th, Rc, omega, m, F_B, F_Te, F_ne)
 
-def ece_intensity(Rp, zp, th, omega, m):
+def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic number
     # characteristic frequencies
     wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
     wpe = lambda R,z: np.sqrt( F_ne(R,z)*e**2/(eps*me) ) # [rad/s]
@@ -79,8 +79,8 @@ def ece_intensity(Rp, zp, th, omega, m):
 
     shape = lambda R,z,w,th: 2*np.pi*zeta(R,z)**(7/2)*w/(np.sqrt(np.pi)*(m*wce(R,z))**2) \
         *integrate.quad(lambda ba: (1 - ba**2 - (1 - ba*np.cos(th))**2*mu(R,z,w))**2 \
-        *(1 - ba*np.cos(th))*exp(-zeta(R,z)*(1 - (1 - ba*np.cos(th))**2*mu(R,z,w))), \
-        ba1(R,z,w,th), ba2(R,z,w,th))
+        *(1 - ba*np.cos(th))*np.exp(-zeta(R,z)*(1 - (1 - ba*np.cos(th))**2*mu(R,z,w))), \
+        ba1(R,z,w,th), ba2(R,z,w,th))[0]
 
     # perfect blackbody intensity
     Ibb = lambda R,z,w: (w/(2*np.pi*c))**2*F_Te(R,z) # H(5.2.37)
@@ -106,8 +106,8 @@ def ece_intensity(Rp, zp, th, omega, m):
 
     # emissitivty after reabsorption
     jms = np.zeros(Rp.size)
-    for i in range(Rp.size):
-        jms[i] = ams[i]*Ibb(Rp[i],zp[i],omega)*exp(-tau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
+    for i in range(Rp.size-1): # tau.size = Rp.size -1 
+        jms[i] = ams[i]*Ibb(Rp[i],zp[i],omega)*np.exp(-tau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
 
     # total intensity measured at outisde
     ece_int = integrate.simps(jms,x=s)
