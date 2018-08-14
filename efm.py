@@ -61,18 +61,18 @@ with h5py.File(fname, 'r') as f:
 cnum = len(clist)
 int_meas = np.zeros(cnum) # ECE intensity measured;
 # you use this to make a 'synthetic' ECE image from simulation data to compare with the measured ECE image
-rad_temp = np.zeros(cnum) # radiation temperature [keV] of each channel; 
+rad_temp = np.zeros(cnum) # radiation temperature [keV] of each channel;
 # it is same with real abs_temp for black body;
-# you determine correctness of temperature/density profile (from Thomson, etc) (variable inputs of syndia) by comparing this output with what 'well calibrated' ECE gives you  
+# you determine correctness of temperature/density profile (from Thomson, etc) (variable inputs of syndia) by comparing this output with what 'well calibrated' ECE gives you
 abs_temp = np.zeros(cnum) # abs_temp from F_Te (input of syndia)
 Rch = np.zeros(cnum)  # R [m] of each channel
 zch = np.zeros(cnum)  # z [m] of each channel
 ach = np.zeros(cnum)  # angle [rad] of each channel
 dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
-for c in range(0, cnum):
+for cn in range(0, cnum):
     # ECEI channel
-    vn = int(clist[c][(cnidx1):(cnidx1+2)])
-    fn = int(clist[c][(cnidx1+2):(cnidx1+4)])
+    vn = int(clist[cn][(cnidx1):(cnidx1+2)])
+    fn = int(clist[cn][(cnidx1+2):(cnidx1+4)])
 
     # define sub rays
     fsub = np.linspace((fn-1)*0.9 + 2.6 + lo + fstart, (fn-1)*0.9 + 2.6 + lo + fend, Nf) # frequency [GHz] of sub rays
@@ -99,26 +99,25 @@ for c in range(0, cnum):
             dS = np.exp(-2*(dz[i]/Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/Bcf )**4)
             S = S + dS
 
-            int_meas[c] = int_meas[c] + ece_int * dS
-            Rch[c] = Rch[c] + Rm * dS
-            zch[c] = zch[c] + zm * dS
+            int_meas[cn] = int_meas[cn] + ece_int * dS
+            Rch[cn] = Rch[cn] + Rm * dS
+            zch[cn] = zch[cn] + zm * dS
 
     # average over response
-    int_meas[c] = int_meas[c] / S
-    Rch[c] = Rch[c] / S
-    zch[c] = zch[c] / S
+    int_meas[cn] = int_meas[cn] / S
+    Rch[cn] = Rch[cn] / S
+    zch[cn] = zch[cn] / S
 
     # radiation temperature
-    #rad_temp[c] = int_meas[c] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
-    rad_temp[c] = (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
-    abs_temp[c] = F_Te(Rch[c], zch[c]) / (1000.0*e) # [keV]
+    rad_temp[cn] = int_meas[cn] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
+    abs_temp[cn] = F_Te(Rch[cn], zch[cn]) / (1000.0*e) # [keV]
 
     print 'S = {:g}'.format(S)
-    print 'Rch = {:g}'.format(Rch[c])
-    print 'zch = {:g}'.format(zch[c])
-    print 'imeas = {:g}'.format(int_meas[c])
-    print 'rad_temp = {:g}'.format(rad_temp[c])
-    print 'abs_temp = {:g}'.format(abs_temp[c])
+    print 'Rch = {:g}'.format(Rch[cn])
+    print 'zch = {:g}'.format(zch[cn])
+    print 'imeas = {:g}'.format(int_meas[cn])
+    print 'rad_temp = {:g}'.format(rad_temp[cn])
+    print 'abs_temp = {:g}'.format(abs_temp[cn])
 
 #print dz
 #print fsub

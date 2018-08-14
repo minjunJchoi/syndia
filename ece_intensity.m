@@ -50,7 +50,7 @@ elseif m == 2 % X-mode
     N2XCsq = @(x,y,theta) 1 - X(x,y).*(1-X(x,y))./(1 - X(x,y) - sin(theta).^2/(2*m^2) - sqrt((sin(theta).^2/(2*m^2)).^2 - (1 - X(x,y)).*cos(theta).^2/m^2)); % H(5.2.48)
     N2XCre = @(x,y,theta) real(sqrt(N2XCsq(x,y,theta)));    
 end
-    
+
 % absorption coefficient
 if m == 1 % O-mode
     amO = @(x,y,theta) pi/(2*c).*wpe(x,y).^2.*N1OCre(x,y,theta).*(1 + 2*cos(theta)^2)^2*sin(theta)^4/(1 + cos(theta)^2)^3.*F_Te(x,y)/mc2; % H(5.2.52) %
@@ -79,6 +79,9 @@ shape = @(x,y,w,theta) 2*pi*zeta(x,y).^(7/2).*w./(sqrt(pi).*(m*wce(x,y)).^2) ...
     .*integral(@(ba) (1 - ba.^2 - (1 - ba*cos(theta)).^2.*mu(x,y,w)).^2 ...
     .*(1 - ba.*cos(theta)).*exp(-zeta(x,y).*(1 - (1 - ba.*cos(theta)).^2.*mu(x,y,w))), ...
     ba1(x,y,w,theta), ba2(x,y,w,theta));
+% 2*pi*zeta(x,y).^(7/2).*w./(sqrt(pi).*(m*wce(x,y)).^2)
+% shape = @(x,y,w,theta,ba) (1 - ba.^2 - (1 - ba*cos(theta)).^2.*mu(x,y,w)).^2 ...
+%      .*(1 - ba.*cos(theta)).*exp(-zeta(x,y).*(1 - (1 - ba.*cos(theta)).^2.*mu(x,y,w)));%, ...
 
 % absorption coefficent along beam path s (from cold position Rc + 3 cm to Rc - 12 cm)
 ams = zeros(1,N);
