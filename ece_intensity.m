@@ -1,4 +1,4 @@
-function [Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, theta, Rc, omega, m, F_B, F_Te, F_ne)
+function [Rm, zm, s, ams, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, theta, Rc, omega, m, F_B, F_Te, F_ne)
 % M.J. Choi (mjchoi@nfri.re.kr)
 % CC BY-NC-SA
 

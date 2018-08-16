@@ -49,7 +49,7 @@ fstart = 0; % [GHz] frequency bandwidth -0.3
 fend = 0; % [GHz] frequency bandwidth +0.3
 
 pstart = -0.14; % [m] start point = cold resonance + pstart
-pend = 0.03; % [m] end point = cold resonance + pend
+pend = 0.035; % [m] end point = cold resonance + pend
 pint = 0.1; % ECE integration path inter step. 0.1 = 10%
 %% physical parameters
 
@@ -178,7 +178,7 @@ for f = 1:length(fidx)
                 F_Bs =  scatteredInterpolant(Rp{z,f}{i,j}', zp{z,f}{i,j}',  F_B(Rp{z,f}{i,j},zp{z,f}{i,j})'); % [T]
 
                 % calculate ECE intensity
-                [Rm, zm, ~, ~, ~, ~, Iece] = ece_intensity(Rp{z,f}{i,j}, zp{z,f}{i,j}, theta{z,f}{i,j}, 0, fs{z,f}(j)*2*pi()*10^9, opt.harmonic(dn), F_Bs, F_Tes, F_nes);
+                [Rm, zm, s, ams, tau, jms, ~, Iece] = ece_intensity(Rp{z,f}{i,j}, zp{z,f}{i,j}, theta{z,f}{i,j}, 0, fs{z,f}(j)*2*pi()*10^9, opt.harmonic(dn), F_Bs, F_Tes, F_nes);
                 
                 fprintf('Iece = %g \n', Iece)
                 fprintf('Rm = %g \n', Rm)
