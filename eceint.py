@@ -85,8 +85,8 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
         amRz = lambda R,z,th: amX(R,z,th)
 
     # shape Maxwellian (relativistic + Doppler)
-    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
-    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
 
     # num integration results in some difference (compared to matlab code)
     shape = lambda R,z,w,th: 2.0*np.pi*zeta(R,z)**(3.5)*w/(np.sqrt(np.pi)*(m*wce(R,z))**2.0) \
@@ -105,6 +105,7 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
             ams[i] = (amRz(Rp[i], zp[i], th[i])).real*(shape(Rp[i], zp[i], omega, th[i])).real
         else:
             ams[i] = 0
+            #ams[i] = (amRz(Rp[i], zp[i], th[i])).real*(shape(Rp[i], zp[i], omega, th[i])).real
 
     # define path from the inside
     s = np.zeros(Rp.size)
@@ -118,17 +119,21 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
 
     # emissitivty after reabsorption
     jms = np.zeros(Rp.size)
-    for i in range(Rp.size-1): # tau.size = Rp.size -1 
+    for i in range(Rp.size):
         jms[i] = ams[i]*Ibb(Rp[i],zp[i],omega)*np.exp(-tau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
 
     # total intensity measured at outisde
-    ece_int = integrate.simps(jms,x=s)
+    # ece_int = integrate.simps(jms,x=s)
+    ece_int = np.sum(jms*ds)
 
     # maximum emissivity position
     midx = np.where(jms == jms.max())
     Rm = np.mean(Rp[midx]) # for multiple maximum cases
     zm = np.mean(zp[midx])
     thm = np.mean(th[midx])
+
+    plt.plot(s,ams)
+    plt.show()
 
     return ece_int, Rm, zm, thm, s, jms, ams, tau
 
