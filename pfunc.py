@@ -102,6 +102,7 @@ def F_Te(R, z):
         Te = F_Te_psin(F_psin(R,z))
     return Te
 
+
 # R = np.arange(1.8,2.0,0.01)
 # z = np.arange(0.1,0.3,0.01)
 # print F_B(R,z)

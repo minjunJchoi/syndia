@@ -3,6 +3,7 @@ from scipy import interpolate
 import math
 import h5py
 import numpy as np
+import matplotlib.pyplot as plt
 
 from inbeam import write_inbeam
 from pfunc import *
@@ -53,7 +54,8 @@ def tb_beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
         Rvec = np.array([-(Rp[i]-Rp[i-1]), -(zp[i]-zp[i-1]), 0]) # opposite direction for emission path
         Bvec = F_Bvec(Rp[i], zp[i])
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
-
+    theta[0] = theta[1] + (theta[1]-theta[2])
+    
     # interpolation (for better accuracy) and change direction from hfs to lfs
     #idx = np.arange(idx2, idx1-1, -1)
     #nidx = np.arange(idx2, idx1, -pint)

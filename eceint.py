@@ -2,6 +2,7 @@ import numpy as np
 import math
 import cmath
 import scipy.integrate as integrate
+import matplotlib.pyplot as plt
 
 from pfunc import *
 
@@ -84,8 +85,8 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
         amRz = lambda R,z,th: amX(R,z,th)
 
     # shape Maxwellian (relativistic + Doppler)
-    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
-    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.lib.scimath.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba1 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) - np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
+    ba2 = lambda R,z,w,th: (mu(R,z,w)*np.cos(th) + np.sqrt(1 - mu(R,z,w)*np.sin(th)**2))/(1 + mu(R,z,w)*np.cos(th)**2)
 
     # num integration results in some difference (compared to matlab code)
     shape = lambda R,z,w,th: 2.0*np.pi*zeta(R,z)**(3.5)*w/(np.sqrt(np.pi)*(m*wce(R,z))**2.0) \
@@ -113,7 +114,7 @@ def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic nu
         s[i] = s[i-1] + ds[i]
 
     # calculate differential optical depth dtau
-    tau = integrate.trapz(ams,x=s) - integrate.cumtrapz(ams,x=s)
+    tau = integrate.trapz(ams,x=s) - np.append(0,integrate.cumtrapz(ams,x=s)) # from zero; a single point matters
 
     # emissitivty after reabsorption
     jms = np.zeros(Rp.size)

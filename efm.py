@@ -120,11 +120,11 @@ for cn in range(0, cnum):
     print 'rad_temp = {:g}'.format(rad_temp[cn])
     print 'abs_temp = {:g}'.format(abs_temp[cn])
 
-plt.plot(s,tau)
-plt.show()
+#plt.plot(s,ams)
+#plt.show()
 
-ece_int = integrate.simps(jms,x=s)
-print ece_int
+#ece_int = integrate.simps(jms,x=s)
+#print ece_int
 
 #print dz
 #print fsub
