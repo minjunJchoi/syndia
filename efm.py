@@ -6,6 +6,7 @@ import math
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
+from kei import *
 from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, set_beam_path, vac_beam_path
 from eceint import ece_intensity
@@ -41,25 +42,8 @@ class EceFwdMod(object):
         ## If ECEI
         self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
         self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
+        self.ecei = KstarEceiInfo(shot, clist)
 
-        if shot < 19392:
-            self.cnidx1 = 6
-            self.dev = self.clist[0][5]
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(ECEI_data_path, self.shot, self.shot, self.dev)
-        else:
-            self.cnidx1 = 7
-            self.dev = self.clist[0][5:7]
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(ECEI_data_path, self.shot, self.shot, self.dev)
-
-        with h5py.File(fname, 'r') as f:
-            # get attributes
-            dset = f['ECEI']
-            mode = dset.attrs['Mode'].strip()
-            if mode is 'O':
-                self.hn = 1  # harmonic number
-            elif mode is 'X':
-                self.hn = 2
-            self.lo = dset.attrs['LoFreq']
 
     def rad_temp(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
         print 'start time = {}\n'.format(strftime("%y%m%d-%H%M%S"))
@@ -104,17 +88,17 @@ class EceFwdMod(object):
 
             ## If ECEI
             # channel numbers
-            vn = int(self.clist[cn][(self.cnidx1):(self.cnidx1+2)])
-            fn = int(self.clist[cn][(self.cnidx1+2):(self.cnidx1+4)])
+            vn = int(self.clist[cn][(self.ecei.cnidx1):(self.ecei.cnidx1+2)])
+            fn = int(self.clist[cn][(self.ecei.cnidx1+2):(self.ecei.cnidx1+4)])
             # define sub rays
-            fsub = np.linspace((fn-1)*0.9 + 2.6 + self.lo + fstart, (fn-1)*0.9 + 2.6 + self.lo + fend, Nf) # frequency [GHz] of sub rays
+            fsub = np.linspace((fn-1)*0.9 + 2.6 + self.ecei.lo + fstart, (fn-1)*0.9 + 2.6 + self.ecei.lo + fend, Nf) # frequency [GHz] of sub rays
             zsub = np.zeros(dz.size)
             asub = np.zeros(dz.size)
             S = 0
             ## loop over sub rays of a single channel
             for i in range(dz.size):
                 # for ECEI; vacuum approximation until Rinit
-                zsub[i], asub[i] = vac_beam_path(self.shot, self.dev, Rinit, vn, dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
+                zsub[i], asub[i] = vac_beam_path(self.ecei, Rinit, vn, dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
 
                 # for ECE on midplane
                 # zsub[i] = dz[i]
@@ -123,16 +107,16 @@ class EceFwdMod(object):
                 for j in range(fsub.size):
                     # find beam path
                     if ToR == 0:
-                        Rp, zp = run_torbeam(self.hn, fsub[j], asub[i], zsub[i], Rinit)
+                        Rp, zp = run_torbeam(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit)
 
                     # take proper range of beam path
-                    Rp, zp, theta = set_beam_path(Rp, zp, self.hn, fsub[j], pstart, pend, pint, self.pf)
+                    Rp, zp, theta = set_beam_path(Rp, zp, self.ecei.hn, fsub[j], pstart, pend, pint, self.pf)
 
                     # profile function along path
                     s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, self.pf, 0)
 
                     # calculate ECE intensity along path
-                    ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
+                    ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.ecei.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
 
                     print 'ece_int Iece = {:g}'.format(ece_int)
                     print 'Rm = {:g}'.format(Rm)
