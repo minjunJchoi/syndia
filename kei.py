@@ -3,6 +3,7 @@
 # Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 
 import h5py
+import numpy as np
 
 class KstarEceiInfo(object):
     def __init__(self, shot, clist):
@@ -53,7 +54,9 @@ class KstarEceiInfo(object):
             self.sf = dset.attrs['LensFocus']
             self.sz = dset.attrs['LensZoom']
 
-    def get_abcd(self, Rinit):
+            print 'ECEI file = {}'.format(self.fname)
+
+    def get_abcd(self, sf, sz, Rinit):
         # ABCD matrix
         if self.dev == 'L':
             sp = 3350 - Rinit*1000  # [m] -> [mm]

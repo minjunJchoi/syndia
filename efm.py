@@ -46,7 +46,6 @@ class EceFwdMod(object):
 
 
     def rad_temp(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
-        print 'start time = {}\n'.format(strftime("%y%m%d-%H%M%S"))
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -146,8 +145,6 @@ class EceFwdMod(object):
             print 'rad_temp = {:g}'.format(rad_temp[cn])
             print 'abs_temp = {:g}'.format(abs_temp[cn])
 
-            print '\nend time ={}'.format(strftime("%y%m%d-%H%M%S"))
-
 #plt.plot(s,ams)
 #plt.show()
 
@@ -181,7 +178,7 @@ def expand_clist(clist):
             for v in range(vi, vf+1):
                 for f in range(fi, ff+1):
                     exp_clist.append(clist[c][0:6] + '%02d' % v + '%02d' % f)
-        elif 'ECEI' in clist[c] and len(clist[c]) == 16: # since 2018
+        elif 'ECEI' in clist[c] and len(clist[c]) == 16: # ECEI_GT0101 since 2018
             vi = int(clist[c][7:9])
             fi = int(clist[c][9:11])
             vf = int(clist[c][12:14])
