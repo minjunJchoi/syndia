@@ -47,11 +47,11 @@ class EceFwdMod(object):
         if shot < 19392:
             self.cnidx1 = 6
             self.dev = self.clist[0][5]
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(ECEI_data_path, shot, shot, dev)
+            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(ECEI_data_path, self.shot, self.shot, self.dev)
         else:
             self.cnidx1 = 7
             self.dev = self.clist[0][5:7]
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(ECEI_data_path, shot, shot, dev)
+            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(ECEI_data_path, self.shot, self.shot, self.dev)
 
         with h5py.File(fname, 'r') as f:
             # get attributes
