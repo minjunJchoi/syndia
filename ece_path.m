@@ -37,6 +37,9 @@ end
 
 fs = linspace((fidx-1)*0.9 + 2.6 + opt.LO(dn) + fstart, (fidx-1)*0.9 + 2.6 + opt.LO(dn) + fend, Nf); % [GHz]
 
+fprintf('zs = %g\n', zs)
+fprintf('as = %g\n', as)
+
 %% calculate
 
 Rpi = cell(length(zs), length(fs));
