@@ -96,10 +96,8 @@ for cn in range(0, cnum):
 
             print 'start time = {}'.format(strftime("%y%m%d-%H%M%S"))
             # calculate ECE intensity along path with profile function along path
-            s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, 10)
-            ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn, F_Bs, F_Tes, F_nes) # [m], [m], [rad], [rad/s], harmonic number
-            # calculate ECE intensity along path
-            #ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn, F_B, F_Te, F_ne) # [m], [m], [rad], [rad/s], harmonic number
+            s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, 0)
+            ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
             print 'end time ={}'.format(strftime("%y%m%d-%H%M%S"))
 
             print 'ece_int Iece = {:g}'.format(ece_int)

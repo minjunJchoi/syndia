@@ -36,42 +36,34 @@ def intp_prof(Rp, zp, th, step): # [m], [m], [rad], [rad/s], harmonic number
     for i in range(1,Rp.size):
         ds[i] = np.sqrt((Rp[i] - Rp[i-1])**2 + (zp[i] - zp[i-1])**2)
         s[i] = s[i-1] + ds[i]
+ 
+    if step > 1:
+        Rps = np.append(Rp[::step],Rp[-1])
+        zps = np.append(zp[::step],zp[-1])
+        ss = np.append(s[::step],s[-1])
+    else:
+        Rps = Rp
+        zps = zp
+        ss = s
 
-    B_path = np.zeros(Rp.size)
-    Te_path = np.zeros(Rp.size)
-    ne_path = np.zeros(Rp.size)
-    for i in range(Rp.size):
-        B_path[i] = F_B(Rp[i], zp[i])
-        Te_path[i] = F_Te(Rp[i], zp[i])
-        ne_path[i] = F_ne(Rp[i], zp[i])
+    Bs = np.zeros(Rps.size)
+    Tes = np.zeros(Rps.size)
+    nes = np.zeros(Rps.size)
+    for i in range(Rps.size):
+        Bs[i] = F_B(Rps[i], zps[i])
+        Tes[i] = F_Te(Rps[i], zps[i])
+        nes[i] = F_ne(Rps[i], zps[i])
 
-    F_Bs = interpolate.interp1d(s, B_path, kind='linear')
-    F_nes = interpolate.interp1d(s, ne_path, kind='linear')
-    F_Tes = interpolate.interp1d(s, Te_path, kind='linear')
+    Btck = interpolate.splrep(ss, Bs)
+    F_Bs = lambda s: interpolate.splev(s, Btck)
+    Tetck = interpolate.splrep(ss, Tes/1e-16)
+    F_Tes = lambda s: interpolate.splev(s ,Tetck)*1e-16
+    netck = interpolate.splrep(ss, nes/1e19)
+    F_nes = lambda s: interpolate.splev(s ,netck)*1e19
 
-    # Rps = Rp[::step]
-    # zps = zp[::step]
-    # B_path = np.zeros(Rps.size)
-    # Te_path = np.zeros(Rps.size)
-    # ne_path = np.zeros(Rps.size)
-    # for i in range(Rps.size):
-    #     B_path[i] = F_B(Rps[i], zps[i])
-    #     Te_path[i] = F_Te(Rps[i], zps[i])
-    #     ne_path[i] = F_ne(Rps[i], zps[i])
-
-    # #F_Bs = interpolate.interp2d(Rps, zps, B_path, kind='linear')
-    # #F_nes = interpolate.interp2d(Rps, zps, ne_path, kind='linear')
-    # #F_Tes = interpolate.interp2d(Rps, zps, Te_path, kind='linear')
-    # Btck = interpolate.bisplrep(Rps, zps, B_path)
-    # F_Bs = lambda R,z: interpolate.bisplev(R,z,Btck)
-    # Tetck = interpolate.bisplrep(Rps, zps, Te_path)
-    # F_Tes = lambda R,z: interpolate.bisplev(R,z,Tetck)
-    # netck = interpolate.bisplrep(Rps, zps, ne_path/1e19)
-    # F_nes = lambda R,z: interpolate.bisplev(R,z,netck)*1e19
-
-
-    plt.plot(s, ne_path, 'go-')
-    plt.plot(s, F_nes(Rps, zps))
-    plt.show()
+    
+    #plt.plot(ss, Tes, 'go-')
+    #plt.plot(s, F_Tes(s))
+    #plt.show()
 
     return s, F_Bs, F_Tes, F_nes

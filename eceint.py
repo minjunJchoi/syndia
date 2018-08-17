@@ -111,9 +111,9 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
 
     # # define path from the inside
     # s = np.zeros(Rp.size)
-    # ds = np.zeros(Rp.size)
-    # for i in range(1,Rp.size):
-    #     ds[i] = np.sqrt((Rp[i] - Rp[i-1])**2 + (zp[i] - zp[i-1])**2)
+    ds = np.zeros(Rp.size)
+    for i in range(1,Rp.size):
+        ds[i] = np.sqrt((Rp[i] - Rp[i-1])**2 + (zp[i] - zp[i-1])**2)
     #     s[i] = s[i-1] + ds[i]
 
     # calculate differential optical depth dtau
@@ -134,8 +134,8 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     zm = np.mean(zp[midx])
     thm = np.mean(th[midx])
 
-    plt.plot(s,ams)
-    plt.show()
+    #plt.plot(s,ams)
+    #plt.show()
 
     return ece_int, Rm, zm, thm, s, jms, ams, tau
 
