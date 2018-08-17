@@ -39,7 +39,7 @@ def torbeam_prof(geqdsk_fn, pf):
         for i in range(x.size):
             f.write('{} {}\n'.format(x[i], y[i]))
 
-    print 'profile data for TORBEAM are saved in {}'.format(TB_path_run)
+    print 'TORBEAM profile data saved at {}'.format(TB_path_run)
 
 
 def write_inbeam(nmod, xf, xpoldeg, xzb, xxb):
@@ -103,7 +103,7 @@ def write_inbeam(nmod, xf, xpoldeg, xzb, xxb):
             else:
                 f.write("{} = {:g},\n".format(key, inbeam[key]))
 
-        print 'inbeam file was written in {}'.format(TB_path_run)
+        print 'TORBEAM inbeam.dat written at {}'.format(TB_path_run)
 
 
 
@@ -170,7 +170,7 @@ def vac_beam_path(ecei, rpos, vn, dz):
     # this will find a ray vertical position and angle at rpos [m]
     # ray starting from the array box posistion
 
-    abcd = ecei.get_abcd(rpos)
+    abcd = ecei.get_abcd(ecei.sf, ecei.sz, rpos)
 
     # vertical position from the reference axis (vertical center of all lens, z=0 line) at ECEI array box
     zz = (np.arange(VNT,0,-1) - 12.5)*14 + dz # [mm]
