@@ -7,8 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 TB_path = "/home/users/mjchoi/torbeam_ifortran/"
+TB_path_eq = "/home/users/mjchoi/torbeam_ifortran/eqdsk2topfile/"
 TB_path_run = "/home/users/mjchoi/torbeam_ifortran/run_torbeam/"
-ECEI_data_path = '/eceidata/exp_2015/'
+ECEI_data_path = "/eceidata/exp_2015/"
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -114,6 +115,7 @@ def run_torbeam(hn, freq, ainit, zinit, Rinit):
     # run
     args = "{}run.sh".format(TB_path)
     re = subprocess.check_output(args, shell=True)
+    print re
     # obtain output
     with open("{}t1_LIB.dat".format(TB_path_run), 'r') as f:
         Rp, zp = np.loadtxt(f, usecols=(0,1), unpack=True)

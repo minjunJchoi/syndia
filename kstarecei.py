@@ -12,7 +12,6 @@
 import numpy as np
 import h5py
 
-DIR = 'data/'
 ENUM = 5000000  # totla number of samples in an ECEI channel
 VN = 24  # number of vertical arrays
 
@@ -21,7 +20,40 @@ class KstarEcei(object):
     def __init__(self):
         pass
 
+    def get_info(self, shot, clist):
+        if 5073 < shot and shot < 6393:
+            self.data_path = '/eceidata/exp_2011/ECEI/DATA_H5/'
+        elif 7065 < shot and shot < 8225:
+            self.data_path = '/eceidata/exp_2012/'
+        elif 8639 < shot and shot < 9427:
+            self.data_path = '/eceidata/exp_2013/'
+        elif 9741 < shot and shot < 11723:
+            self.data_path = '/eceidata/exp_2014/'
+        elif 12272 < shot and shot < 14942:
+            self.data_path = '/eceidata/exp_2015/'
+        elif 14941 < shot and shot < 17356:
+            self.data_path = '/eceidata2/exp_2016/'
+        elif 17963 < shot and shot < 19392:
+            self.data_path = '/eceidata2/exp_2017/'
+        elif 19391 < shot:
+            self.data_path = '/eceidata2/exp_2018/'
+
+        if shot < 19392:
+            self.dev = clist[0][5]
+        else:
+            self.dev = clist[0][5:7]
+        
+        # file name
+        if shot < 19392:
+            self.fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(self.data_path, shot, shot, dev)
+        else:
+            self.fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(self.data_path, shot, shot, dev)
+
+
     def get_data(self, shot, trange, clist, norm=1, atrange=[1.0, 1.01], res=0):
+        # get info
+        self.get_info(shot, clist)
+
         # norm = 0 : no normalization
         # norm = 1 : normalization by trange average
         # norm = 2 : normalization by atrange average
@@ -33,38 +65,16 @@ class KstarEcei(object):
         elif norm == 2:
             print 'data is normalized by atrange average'
 
-        global DIR
-
         self.shot = shot
         self.trange = trange
         self.clist = clist
 
-        # set data folder
-        if 14941 < shot and shot < 17356:
-            DIR = '/eceidata2/exp_2016/'
-        elif 17963 < shot and shot < 19392:
-            DIR = '/eceidata2/exp_2017/'
-        elif 19391 < shot:
-            DIR = '/eceidata2/exp_2018/'
-
-        # device [L, H, or G]
-        if shot < 19392:
-            dev = clist[0][5]
-        else:
-            dev = clist[0][5:7]
-
         # get time base
-        time, idx1, idx2, oidx1, oidx2 = self.time_base(shot, dev, trange)
+        time, idx1, idx2, oidx1, oidx2 = self.time_base(shot, self.dev, trange)
         if norm == 2:
-            atime, aidx1, aidx2, aoidx1, aoidx2 = self.time_base(shot, dev, atrange)
+            atime, aidx1, aidx2, aoidx1, aoidx2 = self.time_base(shot, self.dev, atrange)
 
-        # get data
-        if shot < 19392:
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
-        else:
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
-
-        with h5py.File(fname, 'r') as f:
+        with h5py.File(self.fname, 'r') as f:
             # time series length
             tnum = idx2 - idx1
 
@@ -90,18 +100,14 @@ class KstarEcei(object):
             self.data = data
 
         # get channel posistion
-        self.channel_position(shot, dev, clist)
+        self.channel_position(shot, self.dev, clist)
 
         return time, data
 
     def time_base(self, shot, dev, trange):
         # set self.toff, self.fs, self.time
-        if shot < 19392:
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
-        else:
-            fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
 
-        with h5py.File(fname, 'r') as f:
+        with h5py.File(self.fname, 'r') as f:
             # get attributes
             dset = f['ECEI']
             tt = dset.attrs['TriggerTime']
@@ -151,6 +157,7 @@ class KstarEcei(object):
 
     def channel_position(self, shot, dev, clist):
         # set self.rpos, self.zpos, self.apos
+
         if shot < 19392:
             fname = "{:s}{:06d}/ECEI.{:06d}.{:s}FS.h5".format(DIR, shot, shot, dev)
             cnidx1 = 6
@@ -158,14 +165,14 @@ class KstarEcei(object):
             fname = "{:s}{:06d}/ECEI.{:06d}.{:s}.h5".format(DIR, shot, shot, dev)
             cnidx1 = 7
 
-        with h5py.File(fname, 'r') as f:
+        with h5py.File(self.fname, 'r') as f:
             # get attributes
             dset = f['ECEI']
             bt = dset.attrs['TFcurrent']*0.0995556  # [kA] -> [T]
             mode = dset.attrs['Mode']
-            if 'O' in mode:
+            if mode is 'O':
                 hn = 1  # harmonic number
-            elif 'X' in mode:
+            elif mode is 'X':
                 hn = 2
             lo = dset.attrs['LoFreq']
 
@@ -282,7 +289,3 @@ def beam_path(shot, dev, rpos, vn):
         apos = za[1][vn-1]  # angle [rad] positive means the (z+) up-directed (divering from array to plasma)
 
         return zpos, apos
-
-k = KstarEcei()
-k.channel_position(13728, 'G', ['ECEI_G1208'])
-print k.rpos, k.zpos, k.apos

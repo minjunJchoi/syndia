@@ -22,8 +22,6 @@ c = 299792458
 mc2 = me*c**2
 
 ECEI_data_path = "/eceidata/exp_2015/"
-TB_path_eq = "/home/users/mjchoi/torbeam_ifortran/eqdsk2topfile/"
-TB_path_run = "/home/users/mjchoi/torbeam_ifortran/run_torbeam/"
 
 # geqdsk_fn = "data/g013728.003900"
 # ne_fn = "data/ne_3900.dat"
@@ -64,6 +62,7 @@ class EceFwdMod(object):
             self.lo = dset.attrs['LoFreq']
 
     def rad_temp(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
+        print 'start time = {}\n'.format(strftime("%y%m%d-%H%M%S"))
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -102,7 +101,6 @@ class EceFwdMod(object):
         dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
 
         for cn in range(0, cnum):
-            print 'start time = {}'.format(strftime("%y%m%d-%H%M%S"))
 
             ## If ECEI
             # channel numbers
@@ -131,7 +129,7 @@ class EceFwdMod(object):
                     Rp, zp, theta = set_beam_path(Rp, zp, self.hn, fsub[j], pstart, pend, pint, self.pf)
 
                     # profile function along path
-                    s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, 0)
+                    s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, self.pf, 0)
 
                     # calculate ECE intensity along path
                     ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
@@ -164,7 +162,7 @@ class EceFwdMod(object):
             print 'rad_temp = {:g}'.format(rad_temp[cn])
             print 'abs_temp = {:g}'.format(abs_temp[cn])
 
-            print 'end time ={}'.format(strftime("%y%m%d-%H%M%S"))
+            print '\nend time ={}'.format(strftime("%y%m%d-%H%M%S"))
 
 #plt.plot(s,ams)
 #plt.show()
