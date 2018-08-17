@@ -14,6 +14,7 @@ from time import strftime
 # CC BY-NC-SA
 
 # all mks units except Te
+# s : beam path [m] from hfs to lfs
 # Rp : R coordinates on beam path [m]
 # zp : z coordinate on beam path [m]
 # th : angle between field and beam path [rad]

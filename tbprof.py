@@ -20,7 +20,7 @@ with open(Te_fn, 'r') as f:
 
 ## save for TORBEAM
 # read geqdsk file from the selected EFIT run time and convert it to topfile for TORBEAM
-args = "{}readeqdsk<{}".format(TB_path_eq, gfn)
+args = "{}readeqdsk<{}".format(TB_path_eq, geqdsk_fn)
 re = subprocess.check_output(args, shell=True)
 args = "mv topfile {}".format(TB_path_run)
 re = subprocess.check_output(args, shell=True)

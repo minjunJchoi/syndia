@@ -17,11 +17,10 @@ me = 9.109*1e-31
 
 VNT = 24
 
-## functions needed maybe
-wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
-
-
 def tb_beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
+    ## functions needed maybe
+    wce = lambda R,z: e*F_B(R,z)/me # [rad/s]
+
     ## TORBEAM
     # initial parameters
     write_inbeam(hn, freq*1e9, ainit/np.pi*180, zinit*100, Rinit*100)
@@ -55,7 +54,7 @@ def tb_beam_path(hn, freq, ainit, zinit, Rinit, pstart, pend, pint):
         Bvec = F_Bvec(Rp[i], zp[i])
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
     theta[0] = theta[1] + (theta[1]-theta[2])
-    
+
     # interpolation (for better accuracy) and change direction from hfs to lfs
     #idx = np.arange(idx2, idx1-1, -1)
     #nidx = np.arange(idx2, idx1, -pint)

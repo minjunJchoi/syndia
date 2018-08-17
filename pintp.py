@@ -5,8 +5,6 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
-from pfunc import *
-
 from time import strftime
 
 # M.J. Choi (mjchoi@nfri.re.kr)
@@ -29,14 +27,14 @@ eps = 8.854*1e-12
 c = 299792458
 mc2 = me*c**2
 
-def intp_prof(Rp, zp, th, step): # [m], [m], [rad], [rad/s], harmonic number
+def intp_prof(Rp, zp, th, step, pf): # [m], [m], [rad], [rad/s], harmonic number
     # define path from the inside s=0
     s = np.zeros(Rp.size)
     ds = np.zeros(Rp.size)
     for i in range(1,Rp.size):
         ds[i] = np.sqrt((Rp[i] - Rp[i-1])**2 + (zp[i] - zp[i-1])**2)
         s[i] = s[i-1] + ds[i]
- 
+
     if step > 1:
         Rps = np.append(Rp[::step],Rp[-1])
         zps = np.append(zp[::step],zp[-1])
@@ -50,9 +48,9 @@ def intp_prof(Rp, zp, th, step): # [m], [m], [rad], [rad/s], harmonic number
     Tes = np.zeros(Rps.size)
     nes = np.zeros(Rps.size)
     for i in range(Rps.size):
-        Bs[i] = F_B(Rps[i], zps[i])
-        Tes[i] = F_Te(Rps[i], zps[i])
-        nes[i] = F_ne(Rps[i], zps[i])
+        Bs[i] = pf.F_B(Rps[i], zps[i])
+        Tes[i] = pf.F_Te(Rps[i], zps[i])
+        nes[i] = pf.F_ne(Rps[i], zps[i])
 
     Btck = interpolate.splrep(ss, Bs)
     F_Bs = lambda s: interpolate.splev(s, Btck)
@@ -61,7 +59,7 @@ def intp_prof(Rp, zp, th, step): # [m], [m], [rad], [rad/s], harmonic number
     netck = interpolate.splrep(ss, nes/1e19)
     F_nes = lambda s: interpolate.splev(s ,netck)*1e19
 
-    
+
     #plt.plot(ss, Tes, 'go-')
     #plt.plot(s, F_Tes(s))
     #plt.show()
