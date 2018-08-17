@@ -3,8 +3,11 @@ import math
 import cmath
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
-from pfunc import *
+#from pfunc import *
+
+from time import strftime
 
 #[Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, th, Rc, omega, m, F_B, F_Te, F_ne)
 # M.J. Choi (mjchoi@nfri.re.kr)
@@ -41,7 +44,7 @@ mc2 = me*c**2
 #F_Te = lambda R,z: 1.81824e-16
 #F_ne = lambda R,z: 2.08039e+19
 
-def ece_intensity(Rp, zp, th, omega, m): # [m], [m], [rad], [rad/s], harmonic number
+def ece_intensity(Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], [rad/s], harmonic number
     m = float(m)
 
     # characteristic frequencies

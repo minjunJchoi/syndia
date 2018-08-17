@@ -5,9 +5,14 @@ import math
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
+from pfunc import *
 from bpath import vac_beam_path, tb_beam_path
 from eceint import ece_intensity
-from pfunc import *
+from pintp import intp_prof
+
+from time import strftime
+
+
 # def radiation_temperature(self, shot, dev, clist):
 
 e = 1.602*1e-19
@@ -88,9 +93,14 @@ for cn in range(0, cnum):
         for j in range(fsub.size):
             # find beam path
             Rp, zp, theta = tb_beam_path(hn, fsub[j], asub[i], zsub[i], Rinit, pstart, pend, pint) # [GHz], [rad], [m], [m]
-
+            
+            print 'start time = {}'.format(strftime("%y%m%d-%H%M%S"))
+            # calculate ECE intensity along path with profile function along path
+            F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, 10)
+            ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn, F_Bs, F_Tes, F_nes) # [m], [m], [rad], [rad/s], harmonic number
             # calculate ECE intensity along path
-            ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn) # [m], [m], [rad], [rad/s], harmonic number
+            #ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(Rp, zp, theta, 2*np.pi*fsub[j]*1e9, hn, F_B, F_Te, F_ne) # [m], [m], [rad], [rad/s], harmonic number
+            print 'end time ={}'.format(strftime("%y%m%d-%H%M%S"))
 
             print 'ece_int Iece = {:g}'.format(ece_int)
             print 'Rm = {:g}'.format(Rm)
