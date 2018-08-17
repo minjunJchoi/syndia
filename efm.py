@@ -7,7 +7,7 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
 from pfunc import *
-from bpath import torbeam_prof, tb_beam_path, vac_beam_path
+from bpath import torbeam_prof, write_inbeam, run_torbeam, set_beam_path, vac_beam_path
 from eceint import ece_intensity
 from pintp import intp_prof
 
