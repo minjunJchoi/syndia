@@ -60,5 +60,3 @@ def write_inbeam(nmod, xf, xpoldeg, xzb, xxb):
                 f.write("/\n")
             else:
                 f.write("{} = {:g},\n".format(key, inbeam[key]))
-
-write_inbeam(1, 99.90, 9.90, 0.90, 239)
