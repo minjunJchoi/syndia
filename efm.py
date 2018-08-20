@@ -44,7 +44,7 @@ class EceFwdMod(object):
         self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
         self.ecei = KstarEceiInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, torbeam=1):
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -54,7 +54,7 @@ class EceFwdMod(object):
         # Nz = 1 # number of vertical rays for a single channel
         # zstart = 0 # [mm] first ray at the mini lens -14
         # zend = 0 # [mm] last ray at the mini lens 14
-        # ToR = 0 # 0 : TORBEAM, 1 : Ray tracing
+        # torbeam = 1 # 1 : TORBEAM, 0 : Ray tracing
 
         pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
         pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
@@ -62,7 +62,7 @@ class EceFwdMod(object):
         Rinit = 2.39 # where vacuum region ends and plasma region starts
 
         # ready for TORBEAM
-        if ToR == 0:
+        if torbeam == 1:
             torbeam_prof(self.geqdsk_fn, self.pf)
 
         ## loop for channels
@@ -103,7 +103,7 @@ class EceFwdMod(object):
 
                 for j in range(fsub.size):
                     # find beam path
-                    if ToR == 0:
+                    if torbeam == 1:
                         Rp, zp = run_torbeam(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit)
 
                     # take proper range of beam path
@@ -186,7 +186,7 @@ def expand_clist(clist):
 
             for v in range(vi, vf+1):
                 for f in range(fi, ff+1):
-                    exp_clist.append(clist[c][0:6] + '%02d' % v + '%02d' % f)
+                    exp_clist.append(clist[c][0:7] + '%02d' % v + '%02d' % f)
         else:
             exp_clist.append(clist[c])
     clist = exp_clist
