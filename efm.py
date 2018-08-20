@@ -44,8 +44,7 @@ class EceFwdMod(object):
         self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
         self.ecei = KstarEceiInfo(shot, clist)
 
-
-    def rad_temp(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, ToR=0):
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -84,7 +83,6 @@ class EceFwdMod(object):
         dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
 
         for cn in range(0, cnum):
-
             ## If ECEI
             # channel numbers
             vn = int(self.clist[cn][(self.ecei.cnidx1):(self.ecei.cnidx1+2)])
@@ -144,6 +142,8 @@ class EceFwdMod(object):
             print 'imeas = {:g}'.format(int_meas[cn])
             print 'rad_temp = {:g}'.format(rad_temp[cn])
             print 'abs_temp = {:g}'.format(abs_temp[cn])
+
+        return Rch, zch, int_meas, rad_temp, abs_temp
 
 #plt.plot(s,ams)
 #plt.show()
