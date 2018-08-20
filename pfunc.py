@@ -1,4 +1,10 @@
-# otbain profile functions
+"""
+Plasma profile functions 
+Repo : https://github.com/minjunJchoi/syndia 
+Author : Minjun J. Choi (mjchoi@nfri.re.kr)
+Collaborators : Jieun Lee, Yoonbum Nam
+Acknowledgements : Tongryeol Rhee 
+"""
 from geqdsk_dk import geqdsk_dk as geqdsk_dk
 import numpy as np
 from scipy import interpolate

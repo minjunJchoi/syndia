@@ -1,3 +1,10 @@
+"""
+ECE beam path calculation
+Repo : https://github.com/minjunJchoi/syndia 
+Author : Minjun J. Choi (mjchoi@nfri.re.kr)
+Collaborators : Jieun Lee, Yoonbum Nam
+Acknowledgements : Minho Woo 
+"""
 from collections import OrderedDict
 import os
 import subprocess

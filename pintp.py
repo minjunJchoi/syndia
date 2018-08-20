@@ -1,3 +1,10 @@
+"""
+Intepolated plasma profile along beam path
+Repo : https://github.com/minjunJchoi/syndia 
+Author : Minjun J. Choi (mjchoi@nfri.re.kr)
+Collaborators : Jieun Lee, Yoonbum Nam
+Acknowledgements : Tongryeol Rhee 
+"""
 import numpy as np
 import math
 import cmath
@@ -6,9 +13,6 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 
 from time import strftime
-
-# M.J. Choi (mjchoi@nfri.re.kr)
-# CC BY-NC-SA
 
 # all mks units except Te
 # Rp : R coordinates on beam path [m]

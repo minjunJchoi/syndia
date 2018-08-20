@@ -1,3 +1,9 @@
+"""
+ECE intensity calculation
+Repo : https://github.com/minjunJchoi/syndia 
+Author : Minjun J. Choi (mjchoi@nfri.re.kr)
+Collaborators : Jieun Lee, Yoonbum Nam
+"""
 import numpy as np
 import math
 import cmath

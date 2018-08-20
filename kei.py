@@ -1,3 +1,10 @@
+"""
+KSTAR ECEI information
+Repo : https://github.com/minjunJchoi/syndia 
+Author : Minjun J. Choi (mjchoi@nfri.re.kr), Jieun Lee
+Collaborators : Jieun Lee, Yoonbum Nam
+Acknowledgements : Jaehyun Lee 
+"""
 #!/usr/bin/env python2.7
 
 # Author : Minjun J. Choi (mjchoi@nfri.re.kr)
