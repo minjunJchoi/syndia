@@ -1,9 +1,9 @@
 """
 ECE intensity forward modeling
-Repo : https://github.com/minjunJchoi/syndia 
+Repo : https://github.com/minjunJchoi/syndia
 Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam
-Acknowledgements : Tongryeol Rhee, Minho Woo 
+Acknowledgements : Tongryeol Rhee, Minho Woo
 """
 import subprocess
 import h5py
@@ -106,6 +106,11 @@ class EceFwdMod(object):
                     # find beam path
                     if torbeam == 1:
                         Rp, zp = run_torbeam(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit)
+                        plt.plot(Rp, zp, 'go-')
+                        Rpr, zpr = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
+                        plt.plot(Rpr,zpr, 'bx-')
+                    else:
+                        Rp, zp = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
 
                     # take proper range of beam path
                     Rp, zp, theta = set_beam_path(Rp, zp, self.ecei.hn, fsub[j], pstart, pend, pint, self.pf)
