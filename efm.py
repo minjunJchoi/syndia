@@ -26,7 +26,7 @@ class EceFwdMod(object):
     def __init__(self):
         self.Dlist = []
 
-    def get_profile(self, geqdsk_fn, Te_fn, ne_fn):
+    def set_profile(self, geqdsk_fn, Te_fn, ne_fn):
         self.geqdsk_fn = geqdsk_fn
         self.pf = ProfFunc(geqdsk_fn, Te_fn, ne_fn)
 

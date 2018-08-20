@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import os
 import subprocess
 from scipy import interpolate
 import math
@@ -7,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 TB_path_eq = "/home/users/mjchoi/torbeam_ifortran/eqdsk2topfile/"
-TB_path_run = "/home/users/mjchoi/syndia/data/"
+TB_path_run = "path-to-your-data"
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -15,7 +16,11 @@ me = 9.109*1e-31
 VNT = 24
 
 def torbeam_prof(geqdsk_fn, pf):
-    ## save for TORBEAM
+    # set TB path
+    global TB_path_run
+    TB_path_run = os.path.split(geqdsk_fn)[0] + '/'
+
+    ## save files for TORBEAM
     # read geqdsk file from the selected EFIT run time and convert it to topfile for TORBEAM
     args = "{}readeqdsk<{}".format(TB_path_eq, geqdsk_fn)
     re = subprocess.call(args, shell=True)

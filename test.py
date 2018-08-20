@@ -3,13 +3,13 @@ import scipy.io as sio
 
 from efm import *
 
-geqdsk_fn = 'data/g013728.003900'
-Te_fn = 'data/Te_3900.dat'
-ne_fn = 'data/ne_3900.dat'
+geqdsk_fn = '/home/users/mjchoi/syndia/data/g013728.003900'
+Te_fn = '/home/users/mjchoi/syndia/data/Te_3900.dat'
+ne_fn = '/home/users/mjchoi/syndia/data/ne_3900.dat'
 
 A = EceFwdMod()
 
-A.get_profile(geqdsk_fn, Te_fn, ne_fn)
+A.set_profile(geqdsk_fn, Te_fn, ne_fn)
 
 A.set_channel(13728,['ECEI_G0101-2408'])
 
