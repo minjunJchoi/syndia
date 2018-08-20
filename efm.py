@@ -22,11 +22,6 @@ eps = 8.854*1e-12
 c = 299792458
 mc2 = me*c**2
 
-ECEI_data_path = "/eceidata/exp_2015/"
-
-# geqdsk_fn = "data/g013728.003900"
-# ne_fn = "data/ne_3900.dat"
-# Te_fn = "data/Te_3900.dat"
 class EceFwdMod(object):
     def __init__(self):
         self.Dlist = []

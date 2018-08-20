@@ -6,9 +6,8 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-TB_path = "/home/users/mjchoi/torbeam_ifortran/"
 TB_path_eq = "/home/users/mjchoi/torbeam_ifortran/eqdsk2topfile/"
-TB_path_run = "/home/users/mjchoi/torbeam_ifortran/run_torbeam/"
+TB_path_run = "/home/users/mjchoi/syndia/data/"
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -19,9 +18,9 @@ def torbeam_prof(geqdsk_fn, pf):
     ## save for TORBEAM
     # read geqdsk file from the selected EFIT run time and convert it to topfile for TORBEAM
     args = "{}readeqdsk<{}".format(TB_path_eq, geqdsk_fn)
-    re = subprocess.check_output(args, shell=True)
+    re = subprocess.call(args, shell=True)
     args = "mv topfile {}".format(TB_path_run)
-    re = subprocess.check_output(args, shell=True)
+    re = subprocess.call(args, shell=True)
 
     # save ne.dat for TORBEAM
     x = np.sqrt(pf.psin_ne)
@@ -112,9 +111,8 @@ def run_torbeam(hn, freq, ainit, zinit, Rinit):
     # initial parameters
     write_inbeam(hn, freq*1e9, ainit/np.pi*180, zinit*100.0, Rinit*100.0)
     # run
-    args = "{}run.sh".format(TB_path)
-    re = subprocess.check_output(args, shell=True)
-    print re
+    args = "cd {} && ./run_torbeam.out".format(TB_path_run)
+    re = subprocess.call(args, shell=True)
     # obtain output
     with open("{}t1_LIB.dat".format(TB_path_run), 'r') as f:
         Rp, zp = np.loadtxt(f, usecols=(0,1), unpack=True)
