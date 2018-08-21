@@ -137,7 +137,8 @@ def run_torbeam(hn, freq, ainit, zinit, Rinit):
 
 
 def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
-    ds = 0.005 # 5 mm resolution : similar to TORBEAM
+    ds = 0.005 # 5 mm grad step : similar to TORBEAM
+    dt = 1.0/(freq*1e9) # time step
 
     # define functions
     omega = 2*np.pi*freq*1e9 # [rad/s]
@@ -160,7 +161,6 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
 
     l = 1
     nmax = 1000
-    dt = 0.5/(freq*1e9)
 
     Rp = np.array([Rinit])
     zp = np.array([zinit])
