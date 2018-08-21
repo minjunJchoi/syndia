@@ -1,6 +1,7 @@
 import pickle
 import scipy.io as sio
 import matplotlib.pyplot as plt
+import time
 
 from efm import *
 
@@ -17,9 +18,11 @@ A.set_profile(geqdsk_fn, Te_fn, ne_fn)
 
 A.set_channel(13728,['ECEI_G0101'])
 
+st = time.time()
+
 Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
 
-
+print 'time = {}'.format(time.time() - st)
 
 
 # channel posistion test using TORBEAM

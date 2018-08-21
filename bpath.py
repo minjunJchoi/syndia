@@ -19,7 +19,7 @@ TB_path_run = "path-to-your-data"
 
 e = 1.602*1e-19
 me = 9.109*1e-31
-c = 299792458 # [m/s]
+c = 299792458.0 # [m/s]
 
 VNT = 24
 
@@ -137,45 +137,47 @@ def run_torbeam(hn, freq, ainit, zinit, Rinit):
 
 
 def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
-    ds = 0.001 # 1 mm resolution
+    ds = 0.005 # 5 mm resolution : similar to TORBEAM
 
     # define functions
     omega = 2*np.pi*freq*1e9 # [rad/s]
-    wpe2 = lambda R,z: (5.64e4)**2*(pf.F_ne(R,z)*1.0e13) # [rad/s]
+    wpe2 = lambda R,z: (5.64e4)**2*(pf.F_ne(R,z)*1.0e-6) # [rad/s]
     wce2 = lambda R,z: (1.76e7*pf.F_B(R,z)*1e4)**2 # [rad/s]
 
     # ray tracing for each vertical channel
     if hn == 1: # O-mode
-        denom = lambda R,z: 1
-        numer = lambda R,z: wpe2(R,z)/omega**2
+        denom = lambda R,z: 1.0
+        numer = lambda R,z: wpe2(R,z)/omega**2.0
     elif hn == 2: # X-mode
-        denom = lambda R,z: 1 + wpe2(R,z)*wce2(R,z)/(omega**2 - wpe2(R,z) - wce2(R,z))**2
-        numer = lambda R,z: wpe2(R,z)/omega**2*(omega**2 - wpe2(R,z))/(omega**2 - wpe2(R,z) - wce2(R,z))
+        denom = lambda R,z: 1.0 + wpe2(R,z)*wce2(R,z)/(omega**2.0 - wpe2(R,z) - wce2(R,z))**2
+        numer = lambda R,z: wpe2(R,z)/omega**2.0*(omega**2.0 - wpe2(R,z))/(omega**2.0 - wpe2(R,z) - wce2(R,z))
 
-    dnumerdr = lambda R,z: (numer(R+ds,z) - numer(R-ds,z))/(2*ds)
-    dnumerdz = lambda R,z: (numer(R,z+ds) - numer(R,z-ds))/(2*ds)
+    dnumerdr = lambda R,z: (numer(R+ds,z) - numer(R-ds,z))/(2.0*ds)
+    dnumerdz = lambda R,z: (numer(R,z+ds) - numer(R,z-ds))/(2.0*ds)
 
-    dkRdt = lambda R,z: -omega/2*dnumerdr(R,z)/denom(R,z)
-    dkzdt = lambda R,z: -omega/2*dnumerdz(R,z)/denom(R,z)
+    dkRdt = lambda R,z: -omega/2.0*dnumerdr(R,z)/denom(R,z)
+    dkzdt = lambda R,z: -omega/2.0*dnumerdz(R,z)/denom(R,z)
 
     l = 1
     nmax = 1000
     dt = 0.5/(freq*1e9)
-    Rp = []
-    zp = []
 
-    R = Rinit # [m]
-    z = zinit # [m]
+    Rp = np.array([Rinit])
+    zp = np.array([zinit])
+
+    R = np.array([Rinit]) # [m]
+    z = np.array([zinit]) # [m]
 
     kR = -omega/c*np.cos(ainit)
     kz = omega/c*np.sin(ainit)
 
-    while l <= nmax and R > 1.2 and R < 2.4 and z < 0.49 and z > -0.49:
-        Rp.append(R)
-        zp.append(z)
+    while l <= nmax and R > 1.265 and R < 2.4 and z < 0.49 and z > -0.49:
+        if l > 1:
+            Rp = np.append(Rp, R)
+            zp = np.append(zp, z)
 
-        dRdt = (c**2/omega)*kR/denom(R,z)
-        dzdt = (c**2/omega)*kz/denom(R,z)
+        dRdt = (c**2.0/omega)*kR/denom(R,z)
+        dzdt = (c**2.0/omega)*kz/denom(R,z)
 
         R = R + dRdt*dt
         z = z + dzdt*dt

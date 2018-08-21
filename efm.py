@@ -11,16 +11,14 @@ import numpy as np
 import math
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
+import time
 
 from kei import *
 from pfunc import *
-from bpath import torbeam_prof, write_inbeam, run_torbeam, set_beam_path, vac_beam_path
+from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
 from pintp import intp_prof
 from eceint import ece_intensity
 
-from time import strftime
-
-# def radiation_temperature(self, shot, dev, clist):
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -106,13 +104,14 @@ class EceFwdMod(object):
                     # find beam path
                     if torbeam == 1:
                         Rp, zp = run_torbeam(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit)
-                        plt.plot(Rp, zp, 'go-')
-                        Rpr, zpr = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
-                        plt.plot(Rpr,zpr, 'bx-')
+                        #plt.plot(Rp, zp, 'go-')
+                        #Rprt, zprt = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
+                        #plt.plot(Rprt,zprt, 'bx-')
+                        #plt.show()
                     else:
                         Rp, zp = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
 
-                    # take proper range of beam path
+                    # find proper range of beam path and make interpolated beam path
                     Rp, zp, theta = set_beam_path(Rp, zp, self.ecei.hn, fsub[j], pstart, pend, pint, self.pf)
 
                     # profile function along path

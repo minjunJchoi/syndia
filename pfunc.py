@@ -78,7 +78,10 @@ class ProfFunc(object):
 
     # ne [m^-3] = f(psin)
     def F_ne_psin(self, psin):
-        f = interpolate.interp1d(self.psin_ne, self.ne, kind='linear')
+        if psin < 1:
+            f = interpolate.interp1d(self.psin_ne, self.ne, kind='linear')
+        else:
+            f = lambda psin: np.array([0.01])
         return f(psin)*1e19
 
     # ne [m^-3] = f(R, z) [m, m]
@@ -96,7 +99,10 @@ class ProfFunc(object):
 
     # Te [J] = f(psin)
     def F_Te_psin(self, psin):
-        f = interpolate.interp1d(self.psin_Te, self.Te, kind='linear')
+        if psin < 1:
+            f = interpolate.interp1d(self.psin_Te, self.Te, kind='linear')
+        else:
+            f = lambda psin: np.array([0.01])
         return f(psin)*1000*1.602*1e-19
 
     # Te [J] = f(R, z) [m, m]
