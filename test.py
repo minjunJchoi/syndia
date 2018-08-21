@@ -14,20 +14,23 @@ A = EceFwdMod()
 A.set_profile(geqdsk_fn, Te_fn, ne_fn)
 
 
-# compare TORBEAM and ray tracing
+## compare TORBEAM and ray tracing
+# ray tracing parameters are tuned against TORBEAM
 
 A.set_channel(13728,['ECEI_G0101'])
 
 st = time.time()
+RchTB, zchTB, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
+print 'TB time = {}'.format(time.time() - st)
 
-Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
+st = time.time()
+RchRT, zchRT, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=0)
+print 'RT time = {}'.format(time.time() - st)
 
-print 'time = {}'.format(time.time() - st)
 
 
-# channel posistion test using TORBEAM
+## channel posistion and Te for calibration 
 # A.set_channel(13728,['ECEI_G0101-2408'])
-#
 # Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
 #
 # Rch = Rch.reshape(24,8)
@@ -36,12 +39,17 @@ print 'time = {}'.format(time.time() - st)
 # sio.savemat('data/results.mat', {'Rch':Rch, 'zch':zch, 'abs_temp':abs_temp})
 
 
+
+## synthetic ECE image generation or radiation temperature check
+# A.set_channel(13728,['ECEI_G0101-2408'])
 # Rch, zch, int_meas, rad_temp, abs_temp = A.run(fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, torbeam=1)
 
-
+# Rch = Rch.reshape(24,8)
+# zch = zch.reshape(24,8)
 # int_meas = int_meas.reshape(24,8)
 # rad_temp = rad_temp.reshape(24,8)
-
+# abs_temp = abs_temp.reshape(24,8)
+# sio.savemat('data/results.mat', {'Rch':Rch, 'zch':zch, 'int_meas':int_meas, 'rad_temp':rad_temp, 'abs_temp':abs_temp})
 
 
 
