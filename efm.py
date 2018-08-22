@@ -3,7 +3,6 @@ ECE intensity forward modeling
 Repo : https://github.com/minjunJchoi/syndia
 Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam
-Acknowledgements : Tongryeol Rhee, Minho Woo
 """
 import subprocess
 import h5py
