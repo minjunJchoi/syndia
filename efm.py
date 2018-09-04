@@ -35,7 +35,6 @@ class EceFwdMod(object):
 
     def set_channel(self, shot, clist):
         self.shot = shot
-        self.clist = expand_clist(clist)
 
         ## If ECEI
         self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
@@ -64,7 +63,7 @@ class EceFwdMod(object):
             torbeam_prof(self.geqdsk_fn, self.pf)
 
         ## loop for channels
-        cnum = len(self.clist)
+        cnum = len(self.ecei.clist)
 
         int_meas = np.zeros(cnum) # ECE intensity measured;
         # you use this to make a 'synthetic' ECE image from simulation data to compare with the measured ECE image
@@ -83,8 +82,8 @@ class EceFwdMod(object):
         for cn in range(0, cnum):
             ## If ECEI
             # channel numbers
-            vn = int(self.clist[cn][(self.ecei.cnidx1):(self.ecei.cnidx1+2)])
-            fn = int(self.clist[cn][(self.ecei.cnidx1+2):(self.ecei.cnidx1+4)])
+            vn = int(self.ecei.clist[cn][(self.ecei.cnidx1):(self.ecei.cnidx1+2)])
+            fn = int(self.ecei.clist[cn][(self.ecei.cnidx1+2):(self.ecei.cnidx1+4)])
             # define sub rays
             fsub = np.linspace((fn-1)*0.9 + 2.6 + self.ecei.lo + fstart, (fn-1)*0.9 + 2.6 + self.ecei.lo + fend, Nf) # frequency [GHz] of sub rays
             zsub = np.zeros(dz.size)
@@ -165,34 +164,3 @@ class EceFwdMod(object):
 
 #plt.plot(Rp,zp)
 #plt.show()
-
-def expand_clist(clist):
-    # IN : List of channel names (e.g. 'ECEI_G1201-1208' or 'ECEI_GT1201-1208').
-    # OUT : Expanded list (e.g. 'ECEI_G1201', ..., 'ECEI_G1208')
-
-    # KSTAR ECEI
-    exp_clist = []
-    for c in range(len(clist)):
-        if 'ECEI' in clist[c] and len(clist[c]) == 15: # before 2018
-            vi = int(clist[c][6:8])
-            fi = int(clist[c][8:10])
-            vf = int(clist[c][11:13])
-            ff = int(clist[c][13:15])
-
-            for v in range(vi, vf+1):
-                for f in range(fi, ff+1):
-                    exp_clist.append(clist[c][0:6] + '%02d' % v + '%02d' % f)
-        elif 'ECEI' in clist[c] and len(clist[c]) == 16: # ECEI_GT0101 since 2018
-            vi = int(clist[c][7:9])
-            fi = int(clist[c][9:11])
-            vf = int(clist[c][12:14])
-            ff = int(clist[c][14:16])
-
-            for v in range(vi, vf+1):
-                for f in range(fi, ff+1):
-                    exp_clist.append(clist[c][0:7] + '%02d' % v + '%02d' % f)
-        else:
-            exp_clist.append(clist[c])
-    clist = exp_clist
-
-    return clist
