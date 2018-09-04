@@ -1,1 +1,6 @@
 *.pyc
+.ipynb_checkpoints/
+data/*.dat
+data/results.mat
+data/topfile
+fort.22
