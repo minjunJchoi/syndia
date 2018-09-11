@@ -6,8 +6,8 @@ import time
 from efm import *
 
 geqdsk_fn = '/home/users/mjchoi/syndia/data/g013728.003900'
-Te_fn = '/home/users/mjchoi/syndia/data/Te_3900.dat'
-ne_fn = '/home/users/mjchoi/syndia/data/ne_3900.dat'
+Te_fn = '/home/users/mjchoi/syndia/data/Te_3900.dat' # normalized psi(:), Te(:) [keV]
+ne_fn = '/home/users/mjchoi/syndia/data/ne_3900.dat' # normalized psi(:), ne(:) [1e19 m^-3]
 
 A = EceFwdMod()
 
@@ -29,7 +29,7 @@ print 'RT time = {}'.format(time.time() - st)
 
 
 
-## channel posistion and Te for calibration 
+## channel posistion and Te for calibration
 # A.set_channel(13728,['ECEI_G0101-2408'])
 # Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
 #
