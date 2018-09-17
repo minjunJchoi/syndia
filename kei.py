@@ -130,7 +130,24 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[(1-1.545)/(800*1.545),1/1.545]])).dot(
                    np.array([[1,390],[0,1]]))
         elif self.dev == 'GT':
-            abcd = np.array([[1,1350],[0,1]])
+            sp = 2300 - Rinit*1000
+            abcd = np.array([[1,sp+(1954-sz)],[0,1]]).dot(
+                   np.array([[1,0],[(1.52-1)/(-1000),1.52]])).dot(
+                   np.array([[1,160],[0,1]])).dot(
+                   np.array([[1,0],[(1-1.52)/(1000*1.52),1/1.52]])).dot(
+                   np.array([[1,2280-(1954+160-sz)],[0,1]])).dot(
+                   np.array([[1,0],[(1.52-1)/1000,1.52]])).dot(
+                   np.array([[1,20],[0,1]])).dot(
+                   np.array([1,0],[0,1/1.52])).dot(
+                   np.array([[1,4288-(2280+20)-sf],[0,1]])).dot(
+                   np.array([[1,0],[(1.52-1)/(-1200),1.52]])).dot(
+                   np.array([[1,140],[0,1]])).dot(
+                   np.array([[1,0],[(1-1.52)/(1200*1.52),1/1.52]])).dot(
+                   np.array([[1,4520-(4288+140-sf)],[0,1]])).dot(
+                   np.array([[1,0],[0,1.52]])).dot(
+                   np.array([[1,30],[0,1]])).dot(
+                   np.array([[1,0],[0,1/1.52]]).dot(
+                   np.array([[1,4940-(4520+30)],[0,1]]))
         elif self.dev == 'GR':
             abcd = np.array([[1,1350],[0,1]])
         elif self.dev == 'HT':
