@@ -149,7 +149,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1/1.52]]).dot(
                    np.array([[1,4940-(4520+30)],[0,1]]))
         elif self.dev == 'GR':
-			sp = 2300 - Rinit*1000
+            sp = 2300 - Rinit*1000
             abcd = np.array([[1,sp+(1954-sz)],[0,1]]).dot(
                    np.array([[1,0],[(1.52-1)/(-1000),1.52]])).dot(
                    np.array([[1,160],[0,1]])).dot(
@@ -168,7 +168,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1/1.52]]).dot(
                    np.array([[1,4940-(4520+30)],[0,1]]))
         elif self.dev == 'HT':
-			sp = 2300 - Rinit*1000
+            sp = 2300 - Rinit*1000
             abcd = np.array([[1,sp+2586],[0,1]]).dot(
                    np.array([[1,0],[0,1.5]]).dot(
                    np.array([[1,140],[0,1]])).dot(
