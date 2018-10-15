@@ -1,9 +1,9 @@
 """
-Plasma profile functions 
-Repo : https://github.com/minjunJchoi/syndia 
+Plasma profile functions
+Repo : https://github.com/minjunJchoi/syndia
 Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam
-Acknowledgements : Tongryeol Rhee 
+Acknowledgements : Tongryeol Rhee
 """
 from geqdsk_dk import geqdsk_dk as geqdsk_dk
 import numpy as np
@@ -49,9 +49,15 @@ class ProfFunc(object):
             while not it.finished:
                 idx = it.multi_index
                 B[idx] = self.geq.B_abs(R[idx], z[idx])
+                ####### add B field strenth 2D perturbation here #######
+                # B = B + delta_B(R, z)
+                ####### add B field strenth 2D perturbation here #######
                 it.iternext()
         else:
             B = self.geq.B_abs(R, z)
+            ####### add B field strenth 2D perturbation here #######
+            # B = B + delta_B(R, z)
+            ####### add B field strenth 2D perturbation here #######
         return B
 
     # Bvec = [Br, Bz, Bt] [T]
@@ -65,9 +71,15 @@ class ProfFunc(object):
                 Bvec[0,idx] = B_field[0]
                 Bvec[1,idx] = B_field[1]
                 Bvec[2,idx] = B_field[2]
+                ####### add B field 2D perturbation here #######
+                # B = B + delta_B(R, z)
+                ####### add B field 2D perturbation here #######
                 it.iternext()
         else:
             Bvec = self.geq.B_field(R, z)
+            ####### add B field 2D perturbation here #######
+            # B = B + delta_B(R, z)
+            ####### add B field 2D perturbation here #######
         # Bvec = self.geq.B_fields(R, z)
         return Bvec
 
@@ -92,9 +104,15 @@ class ProfFunc(object):
             while not it.finished:
                 idx = it.multi_index
                 ne[idx] = self.F_ne_psin(self.F_psin(R[idx], z[idx]))
+                ####### add ne 2D perturbation here #######
+                # ne = ne + delta_ne(R, z)
+                ####### add ne 2D perturbation here #######
                 it.iternext()
         else:
             ne = self.F_ne_psin(self.F_psin(R,z))
+            ####### add ne 2D perturbation here #######
+            # ne = ne + delta_ne(R, z)
+            ####### add ne 2D perturbation here #######
         return ne
 
     # Te [J] = f(psin)
@@ -113,9 +131,15 @@ class ProfFunc(object):
             while not it.finished:
                 idx = it.multi_index
                 Te[idx] = self.F_Te_psin(self.F_psin(R[idx], z[idx]))
+                ####### add Te 2D perturbation here #######
+                # Te = Te + delta_Te(R, z)
+                ####### add Te 2D perturbation here #######
                 it.iternext()
         else:
             Te = self.F_Te_psin(self.F_psin(R,z))
+            ####### add Te 2D perturbation here #######
+            # Te = Te + delta_Te(R, z)
+            ####### add Te 2D perturbation here #######
         return Te
 
 
