@@ -1,13 +1,11 @@
 """
 KSTAR ECEI information
 Repo : https://github.com/minjunJchoi/syndia
-Author : Minjun J. Choi (mjchoi@nfri.re.kr), Jieun Lee
+Author : Minjun J. Choi (mjchoi@nfri.re.kr), Jieun Lee (adel.jieun@gmail.com)
 Collaborators : Jieun Lee, Yoonbum Nam
 Acknowledgements : Jaehyun Lee, Gunsu Yun
 """
 #!/usr/bin/env python2.7
-
-# Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 
 import h5py
 import numpy as np

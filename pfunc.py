@@ -11,8 +11,8 @@ from scipy import interpolate
 import matplotlib.pyplot as plt
 
 # geqdsk_fn = "data/g013728.003900"
-# ne_fn = "data/ne_3900.dat"
-# Te_fn = "data/Te_3900.dat"
+# ne_fn = "data/ne_3900.dat" [norm. psi, 1e19 m^-3]
+# Te_fn = "data/Te_3900.dat" [norm. psi, keV]
 ## set 2D coordinate
 # Rmin = 1.2 # [m]
 # Rmax = 2.4 # [m]
