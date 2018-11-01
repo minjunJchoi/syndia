@@ -7,6 +7,7 @@ Acknowledgements : Jaehyun Lee, Gunsu Yun
 """
 #!/usr/bin/env python2.7
 
+
 import h5py
 import numpy as np
 
@@ -144,7 +145,7 @@ class KstarEceiInfo(object):
                    np.array([[1,4520-(4288+140-sf)],[0,1]])).dot(
                    np.array([[1,0],[0,1.52]])).dot(
                    np.array([[1,30],[0,1]])).dot(
-                   np.array([[1,0],[0,1/1.52]]).dot(
+                   np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,4940-(4520+30)],[0,1]]))
         elif self.dev == 'GR':
             sp = 2300 - Rinit*1000
@@ -163,7 +164,7 @@ class KstarEceiInfo(object):
                    np.array([[1,4520-(4288+140-sf)],[0,1]])).dot(
                    np.array([[1,0],[0,1.52]])).dot(
                    np.array([[1,30],[0,1]])).dot(
-                   np.array([[1,0],[0,1/1.52]]).dot(
+                   np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,4940-(4520+30)],[0,1]]))
         elif self.dev == 'HT':
             sp = 2300 - Rinit*1000
@@ -182,7 +183,7 @@ class KstarEceiInfo(object):
                    np.array([[1,6489-(5919+130-sf)],[0,1]])).dot(
                    np.array([[1,0],[0,1.5]])).dot(
                    np.array([[1,25.62],[0,1]])).dot(
-                   np.array([[1,0],[0,1/1.5]]).dot(
+                   np.array([[1,0],[0,1/1.5]])).dot(
                    np.array([[1,7094.62-(6489+25.62)],[0,1]]]))
 
         return abcd
