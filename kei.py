@@ -184,7 +184,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1.5]])).dot(
                    np.array([[1,25.62],[0,1]])).dot(
                    np.array([[1,0],[0,1/1.5]])).dot(
-                   np.array([[1,7094.62-(6489+25.62)],[0,1]]]))
+                   np.array([[1,7094.62-(6489+25.62)],[0,1]]))
 
         return abcd
 
