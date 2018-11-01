@@ -1,3 +1,4 @@
 *.pyc
+data/
 .ipynb_checkpoints/
 fort.22
