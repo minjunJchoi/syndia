@@ -201,17 +201,23 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     wce = lambda R,z: e*pf.F_B(R,z)/me # [rad/s]
 
     # find the proper range
+    fRz = np.zeros(Rp.size)
     for i in range(Rp.size): # increasing during loop
-        fRz = wce(Rp[i], zp[i])/(2*np.pi*1e9)*hn # EC frequency [GHz]
-        
-        if np.abs(freq + pend - fRz) < 0.3:
-            idx1 = i # no need to be very accurate
-        if np.abs(freq - fRz) < 0.3:
-            Rcold = Rp[i] # EC resonance position [cm] no need to be accurate
-        if np.abs(freq + pstart - fRz) < 0.3:
-            idx2 = i # no need to be very accurate
+        if i > 0 and (Rp[i] > Rp[i-1]): # no turning back
             break
-        idx2 = i # if not found in the above, take the last index
+        fRz[i] = wce(Rp[i], zp[i])/(2*np.pi*1e9)*hn # EC frequency [GHz]
+
+    ridx = np.where((fRz >= freq+pend) & (fRz <= freq+pstart))
+    idx1 = ridx[0][0]
+    idx2 = ridx[0][-1]
+        #if np.abs(freq + pend - fRz[i]) < 0.3:
+        #    idx1 = i # no need to be very accurate
+        #if np.abs(freq - fRz[i]) < 0.3:
+        #    Rcold = Rp[i] # EC resonance position [cm] no need to be accurate
+        #if np.abs(freq + pstart - fRz[i]) < 0.3:
+        #    idx2 = i # no need to be very accurate
+        #    break
+    print freq, fRz[idx1:(idx2+1)]
 
     # Rp, zp between idx1 idx2; calculate angle between emission direction and B-field
     Rp = Rp[idx1:(idx2+1)]
