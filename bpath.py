@@ -203,7 +203,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     # find the proper range
     for i in range(Rp.size): # increasing during loop
         fRz = wce(Rp[i], zp[i])/(2*np.pi*1e9)*hn # EC frequency [GHz]
-
+        
         if np.abs(freq + pend - fRz) < 0.3:
             idx1 = i # no need to be very accurate
         if np.abs(freq - fRz) < 0.3:
@@ -211,6 +211,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
         if np.abs(freq + pstart - fRz) < 0.3:
             idx2 = i # no need to be very accurate
             break
+        idx2 = i # if not found in the above, take the last index
 
     # Rp, zp between idx1 idx2; calculate angle between emission direction and B-field
     Rp = Rp[idx1:(idx2+1)]
