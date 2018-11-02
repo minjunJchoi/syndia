@@ -217,7 +217,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
         #if np.abs(freq + pstart - fRz[i]) < 0.3:
         #    idx2 = i # no need to be very accurate
         #    break
-    print freq, fRz[idx1:(idx2+1)]
+#    print freq, fRz[idx1:(idx2+1)]
 
     # Rp, zp between idx1 idx2; calculate angle between emission direction and B-field
     Rp = Rp[idx1:(idx2+1)]
