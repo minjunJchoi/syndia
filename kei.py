@@ -8,7 +8,7 @@ Acknowledgements : Jaehyun Lee, Gunsu Yun
 #!/usr/bin/env python2.7
 
 
-import h5py
+#import h5py
 import numpy as np
 
 class KstarEceiInfo(object):
@@ -137,7 +137,7 @@ class KstarEceiInfo(object):
                    np.array([[1,2280-(1954+160-sz)],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/1000,1.52]])).dot(
                    np.array([[1,20],[0,1]])).dot(
-                   np.array([1,0],[0,1/1.52])).dot(
+                   np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,4288-(2280+20)-sf],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/(-1200),1.52]])).dot(
                    np.array([[1,140],[0,1]])).dot(
@@ -146,7 +146,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1.52]])).dot(
                    np.array([[1,30],[0,1]])).dot(
                    np.array([[1,0],[0,1/1.52]])).dot(
-                   np.array([[1,4940-(4520+30)],[0,1]]))
+                   np.array([[1,4940-(4520+30)],[0,1]]))			   
         elif self.dev == 'GR':
             sp = 2300 - Rinit*1000
             abcd = np.array([[1,sp+(1954-sz)],[0,1]]).dot(
@@ -156,7 +156,7 @@ class KstarEceiInfo(object):
                    np.array([[1,2280-(1954+160-sz)],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/1000,1.52]])).dot(
                    np.array([[1,20],[0,1]])).dot(
-                   np.array([1,0],[0,1/1.52])).dot(
+                   np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,4288-(2280+20)-sf],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/(-1200),1.52]])).dot(
                    np.array([[1,140],[0,1]])).dot(
@@ -169,9 +169,9 @@ class KstarEceiInfo(object):
         elif self.dev == 'HT':
             sp = 2300 - Rinit*1000
             abcd = np.array([[1,sp+2586],[0,1]]).dot(
-                   np.array([[1,0],[0,1.52]]).dot(
+                   np.array([[1,0],[0,1.52]])).dot(
                    np.array([[1,140],[0,1]])).dot(
-                   np.array([[1,0],[(1-1.52)/(770*1.5),1/1.52]])).dot(
+                   np.array([[1,0],[(1-1.52)/(770*1.52),1/1.52]])).dot(
                    np.array([[1,4929-(2586+140)-sz],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/(1200),1.52]])).dot(
                    np.array([[1,20],[0,1]])).dot(
@@ -185,7 +185,7 @@ class KstarEceiInfo(object):
                    np.array([[1,25.62],[0,1]])).dot(
                    np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,7094.62-(6489+25.62)],[0,1]]))
-
+		
         return 'abcd'
 
 
