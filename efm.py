@@ -41,7 +41,7 @@ class EceFwdMod(object):
         self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
         self.ecei = KstarEceiInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, torbeam=1):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=1):
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -51,12 +51,13 @@ class EceFwdMod(object):
         # Nz = 1 # number of vertical rays for a single channel
         # zstart = 0 # [mm] first ray at the mini lens -14
         # zend = 0 # [mm] last ray at the mini lens 14
-        # torbeam = 1 # 1 : TORBEAM, 0 : Ray tracing
 
-        pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
-        pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
-        pint = 0.1 # ECE integration path inter step. 0.1 = 10%
-        Rinit = 2.39 # where vacuum region ends and plasma region starts
+        # pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
+        # pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
+        # pint = 0.1 # ECE integration path inter step. 0.1 = 10%
+        # Rinit = 2.39 # where vacuum region ends and plasma region starts
+
+        # torbeam = 1 # 1 : TORBEAM, 0 : Ray tracing
 
         # ready for TORBEAM
         if torbeam == 1:

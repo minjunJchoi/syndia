@@ -143,7 +143,8 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     thm = np.mean(th[midx])
 
     #plt.plot(s,ams)
-    #plt.show()
+    plt.plot(Rp,jms)
+    plt.show()
 
     return ece_int, Rm, zm, thm, s, jms, ams, tau
 
