@@ -210,14 +210,13 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     ridx = np.where((fRz >= freq+pend) & (fRz <= freq+pstart))
     idx1 = ridx[0][0]
     idx2 = ridx[0][-1]
-        #if np.abs(freq + pend - fRz[i]) < 0.3:
-        #    idx1 = i # no need to be very accurate
-        #if np.abs(freq - fRz[i]) < 0.3:
-        #    Rcold = Rp[i] # EC resonance position [cm] no need to be accurate
-        #if np.abs(freq + pstart - fRz[i]) < 0.3:
-        #    idx2 = i # no need to be very accurate
-        #    break
-    #print(freq, fRz[idx1:(idx2+1)])
+
+    # print('Bt at R=1.8 m = {:0}'.pf.F_B(1.8, 0)) # Bt at 1.8 m [Bt]
+    # Rcold
+    #cidx = np.where(np.abs(fRz - freq) == np.abs(fRz - freq).min())
+    #Rcold = Rp[cidx]
+    #zcold = zp[cidx]
+    #print(freq, wce(Rcold, zcold)/(2*np.pi*1e9)*hn)
 
     # Rp, zp between idx1 idx2 from lfs to hfs; calculate angle between emission direction and B-field
     Rp = Rp[idx1:(idx2+1)]
@@ -229,7 +228,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
     theta[0] = theta[1] + (theta[1]-theta[2])
 
-    print(pf.F_B(1.8, 0), wce(1.8, 0)/(2*np.pi*1e9)*hn*1.8/freq, Rp) # EC frequency [GHz]
+    #print(Rcold, Rp) # EC frequency [GHz]
 
     # interpolation (for better accuracy) and change direction from hfs to lfs
     idx = np.arange(Rp.size-1,-1,-1)
@@ -240,6 +239,9 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     Rp = fRp(nidx)
     zp = fzp(nidx)
     theta = fth(nidx)
+
+    #print('perpendicular wave') # theta = np.pi/2 [rad]
+    #theta = 0*theta + np.pi/2
 
     return Rp, zp, theta
 

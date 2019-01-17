@@ -122,6 +122,7 @@ class EceFwdMod(object):
                     print 'ece_int Iece = {:g}'.format(ece_int)
                     print 'Rm = {:g}'.format(Rm)
                     print 'zm = {:g}'.format(zm)
+                    print 'thm = {:g}'.format(thm)
 
                     # channel response in optics and IF
                     dS = np.exp(-2*(dz[i]/self.Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/self.Bcf )**4)

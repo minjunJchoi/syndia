@@ -132,19 +132,30 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     for i in range(s.size):
         jms[i] = ams[i]*Ibb(s[i],omega)*np.exp(-tau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
 
+    #plt.plot(s,ams)
+    #plt.plot(Rp,jms)
+    
+    # maximum emissivity position
+    #midx = np.where(jms == jms.max())
+    #Rm = np.mean(Rp[midx]) # for multiple maximum cases
+    #zm = np.mean(zp[midx])
+    #thm = np.mean(th[midx])
+    
+    #plt.plot(Rm, jms[midx], 'x')
+
+    # mean emissivity position
+    njms = jms/np.sum(jms) 
+    Rm = np.sum(Rp * njms)
+    zm = np.sum(zp * njms)
+    thm = np.sum(th * njms)
+
+    #plt.plot(Rm, jms[midx], 'o')
+
+    #plt.show()
+
     # total intensity measured at outisde
     # ece_int = integrate.simps(jms,x=s)
     ece_int = np.sum(jms*ds)
-
-    # maximum emissivity position
-    midx = np.where(jms == jms.max())
-    Rm = np.mean(Rp[midx]) # for multiple maximum cases
-    zm = np.mean(zp[midx])
-    thm = np.mean(th[midx])
-
-    #plt.plot(s,ams)
-    plt.plot(Rp,jms)
-    plt.show()
 
     return ece_int, Rm, zm, thm, s, jms, ams, tau
 
