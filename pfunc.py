@@ -54,7 +54,7 @@ class ProfFunc(object):
                 ####### add B field strenth 2D perturbation here #######
                 it.iternext()
         else:
-            B = self.geq.B_abs(R, z)
+            B = float(self.geq.B_abs(R, z))
             ####### add B field strenth 2D perturbation here #######
             # B = B + delta_B(R, z)
             ####### add B field strenth 2D perturbation here #######
@@ -109,7 +109,7 @@ class ProfFunc(object):
                 ####### add ne 2D perturbation here #######
                 it.iternext()
         else:
-            ne = self.F_ne_psin(self.F_psin(R,z))
+            ne = float(self.F_ne_psin(self.F_psin(R,z)))
             ####### add ne 2D perturbation here #######
             # ne = ne + delta_ne(R, z)
             ####### add ne 2D perturbation here #######
@@ -136,7 +136,7 @@ class ProfFunc(object):
                 ####### add Te 2D perturbation here #######
                 it.iternext()
         else:
-            Te = self.F_Te_psin(self.F_psin(R,z))
+            Te = float(self.F_Te_psin(self.F_psin(R,z)))
             ####### add Te 2D perturbation here #######
             # Te = Te + delta_Te(R, z)
             ####### add Te 2D perturbation here #######

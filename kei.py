@@ -186,7 +186,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1/1.52]])).dot(
                    np.array([[1,7094.62-(6489+25.62)],[0,1]]))
 		
-        return 'abcd'
+        return abcd
 
 
 def expand_clist(clist):
