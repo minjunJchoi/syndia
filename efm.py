@@ -119,10 +119,11 @@ class EceFwdMod(object):
                     # calculate ECE intensity along path
                     ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.ecei.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
 
-                    print 'ece_int Iece = {:g}'.format(ece_int)
-                    print 'Rm = {:g}'.format(Rm)
-                    print 'zm = {:g}'.format(zm)
-                    print 'thm = {:g}'.format(thm)
+                    print('tau = {:g}'.format(integrate.trapz(ams,x=s)))
+                    print('ece_int Iece = {:g}'.format(ece_int))
+                    print('Rm = {:g}'.format(Rm))
+                    print('zm = {:g}'.format(zm))
+                    print('thm = {:g}'.format(thm))
 
                     # channel response in optics and IF
                     dS = np.exp(-2*(dz[i]/self.Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/self.Bcf )**4)
@@ -141,12 +142,13 @@ class EceFwdMod(object):
             rad_temp[cn] = int_meas[cn] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
             abs_temp[cn] = self.pf.F_Te(Rch[cn], zch[cn]) / (1000.0*e) # [keV]
 
-            print 'S = {:g}'.format(S)
-            print 'Rch = {:g}'.format(Rch[cn])
-            print 'zch = {:g}'.format(zch[cn])
-            print 'imeas = {:g}'.format(int_meas[cn])
-            print 'rad_temp = {:g}'.format(rad_temp[cn])
-            print 'abs_temp = {:g}'.format(abs_temp[cn])
+            print('S = {:g}'.format(S))
+            print('Rch = {:g}'.format(Rch[cn]))
+            print('zch = {:g}'.format(zch[cn]))
+            print('imeas = {:g}'.format(int_meas[cn]))
+            print('rad_temp = {:g}'.format(rad_temp[cn]))
+            print('abs_temp = {:g}'.format(abs_temp[cn]))
+            #print('abs_dens = {:g}'.format(self.pf.F_ne(Rch[cn], zch[cn])/1e19))
 
         return Rch, zch, int_meas, rad_temp, abs_temp
 
