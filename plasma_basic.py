@@ -8,6 +8,16 @@ col_rel : collision frequency between relativistic electron and thermal electron
 eleskin : electron skin depth
 col_ei  : electron ion collision frequency from F.F.Chen Appendix A
 col_tokamak : collision frequency in Tokamak from wikipedia
+
+gyroe   : gyroradius of electron
+gyroi   : gyroraduis of ions
+gyroe_re: gyroradius of relativistic electron
+25 June 2018
+Tongnyeol Rhee
+
+colii_callen: Bug modification, temperature unit is eV not keV
+10 January 2019
+Tongnyeol Rhee
 """
 import numpy as np
 me = 9.10938215e-31     # electron rest mass
@@ -87,7 +97,6 @@ def ev2ve(eV):
         speed of m/s unit
     """    
     return cv*np.sqrt( eV*(eV+2.e0*mec2))/(eV+mec2)
-
 
 def wce(B):
     """
@@ -249,7 +258,44 @@ def col_tokamak(Te, nev, R, eps, q):
     """
     return col_ei(Te,nev)*ev2ve(Te)*np.sqrt(2.)*eps**(-1.5)*q*R;
 
-
+def gyroi(E, B, mu, Zi,pitch):
+    """
+    Ion gyroradius in m unit
+    Input:
+        E : energy in eV
+        B : Magnetic field strength in Tesla unit
+        mu : Ion to mass ratio
+        Zi : Charge in e unit
+        pitch : pitchangle of v||^2 / v^2 
+    """
+    V = ev2vi(E, mu);
+    Vperp = V*np.sqrt(1-pitch);
+    return mu * mp * Vperp / Zi / eV2J / B;
+    
+def gyroe(E, B, pitch):
+    """
+    electron gyroradius in m unit
+    Input:
+        E : energy in eV
+        B : Magnetic field strength in Tesla unit
+        pitch : pitchangle of v||^2 / v^2 
+    """
+    V = ev2ve(E);
+    Vperp = V*np.sqrt(1-pitch);
+    return me * Vperp / eV2J / B;
+    
+def gyroe_re(E, B, pitch):
+    """
+    relativistic electron gyroradius in m unit
+    Input:
+        E : energy in eV
+        B : Magnetic field strength in Tesla unit
+        pitch : pitchangle of v||^2 / v^2 
+    """
+    V = ev2ve(E);
+    Vperp = V*np.sqrt(1-pitch);
+    return ev2gamma(E) * me * Vperp / eV2J / B;
+ 
 def Debye(Te, nev):
     """
     Debye length calculator
@@ -334,8 +380,8 @@ def colii_callen(mu,Ti,Te,nev,Zi=None):
     """
     ion ion collision frequency derived by J.Callen
     mu: ion mass ratio to proton
-    Ti : ion Temperatrue by keV
-    Te : electron temperature by keV
+    Ti : ion Temperatrue by eV
+    Te : electron temperature by eV
     nev : density in m^-3
     Zi: charge density to elctron charge
     """
