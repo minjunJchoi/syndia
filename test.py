@@ -5,9 +5,9 @@ import time
 
 from efm import *
 
-geqdsk_fn = '/home/users/mjchoi/syndia/data/g013728.003900'
-Te_fn = '/home/users/mjchoi/syndia/data/Te_3900.dat' # normalized psi(:), Te(:) [keV]
-ne_fn = '/home/users/mjchoi/syndia/data/ne_3900.dat' # normalized psi(:), ne(:) [1e19 m^-3]
+geqdsk_fn = '/home/users/mjchoi/syndia/data/g021693.005000'
+Te_fn = '/home/users/mjchoi/syndia/data/21693_5000_Te.dat' # normalized psi(:), Te(:) [keV]
+ne_fn = '/home/users/mjchoi/syndia/data/21693_5000_ne.dat' # normalized psi(:), ne(:) [1e19 m^-3]
 
 A = EceFwdMod()
 
@@ -16,27 +16,26 @@ A.set_profile(geqdsk_fn, Te_fn, ne_fn)
 
 ## compare TORBEAM and ray tracing
 # ray tracing parameters are tuned against TORBEAM
+#A.set_channel(19323,['ECEI_G0101'])
 
-A.set_channel(13728,['ECEI_G0101'])
+#st = time.time()
+#RchTB, zchTB, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
+#print 'TB time = {}'.format(time.time() - st)
 
-st = time.time()
-RchTB, zchTB, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
-print 'TB time = {}'.format(time.time() - st)
-
-st = time.time()
-RchRT, zchRT, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=0)
-print 'RT time = {}'.format(time.time() - st)
+#st = time.time()
+#RchRT, zchRT, _, _, _ = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=0)
+#print 'RT time = {}'.format(time.time() - st)
 
 
 
 ## channel posistion and Te for calibration
-# A.set_channel(13728,['ECEI_G0101-2408'])
-# Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
-#
-# Rch = Rch.reshape(24,8)
-# zch = zch.reshape(24,8)
-# abs_temp = abs_temp.reshape(24,8)
-# sio.savemat('data/results.mat', {'Rch':Rch, 'zch':zch, 'abs_temp':abs_temp})
+A.set_channel(21693,['ECEI_GR1201'])
+Rch, zch, _, _, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,pstart=7.8,pend=-2,pint=0.5,Rinit=2.39,torbeam=0)
+
+Rch = Rch.reshape(24,8)
+zch = zch.reshape(24,8)
+abs_temp = abs_temp.reshape(24,8)
+sio.savemat('data/results_21693_5000_GR.mat', {'Rch':Rch, 'zch':zch, 'abs_temp':abs_temp})
 
 
 
