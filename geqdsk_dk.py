@@ -1885,67 +1885,67 @@ class geqdsk_dk(Geqdsk):
 
 
     def init_rbx(self): 
-        ix1 = 0;
-        nbbbs = self.data['nbbbs'][0];
-        zmaxis = self.data['zmaxis'][0];
-	zbbbs = self.data['zbbbs'][0]
-	rbbbs = self.data['rbbbs'][0]
-	izblr = np.zeros(2,dtype='int');
-	for i in range(nbbbs-1): 
-		if((zmaxis - zbbbs[i])*(zmaxis- zbbbs[i+1])<=0.):
-			izblr[ix1] = i;
-			ix1+=1;
-	####### get rbxl and rblr #######
-	#double R2, R1, Z2, Z1, Rb1, Rb2, Zx;
-	print("ix1 is %d"%ix1);
-	if(ix1==2):
-		Zx  = zmaxis;
-		ix2 = izblr[0];
-		ix3 = izblr[1];
-		R2 = rbbbs[ix2+1]; R1 = rbbbs[ix2];
-		Z2 = zbbbs[ix2+1]; Z1 = zbbbs[ix2];
-		Rb1 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
-		R2 = rbbbs[ix3+1]; R1 = rbbbs[ix3];
-		Z2 = zbbbs[ix3+1]; Z1 = zbbbs[ix3];
-		Rb2 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
-		print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
-		if(Rb1 >= Rb2):
-			self.rbxl = Rb2;
-			self.rbxr = Rb1;
-		else:
-			self.rbxl = Rb1;
-			self.rbxr = Rb2;
-	else:
-		print("plasma boundary has problems\n");
-		self.rbxl = rbbbs.min(); 
-		self.rbxr = rbbbs.max();
-
+       ix1 = 0;
+       nbbbs = self.data['nbbbs'][0];
+       zmaxis = self.data['zmaxis'][0];
+       zbbbs = self.data['zbbbs'][0]
+       rbbbs = self.data['rbbbs'][0]
+       izblr = np.zeros(2,dtype='int');
+       for i in range(nbbbs-1): 
+       	if((zmaxis - zbbbs[i])*(zmaxis- zbbbs[i+1])<=0.):
+       		izblr[ix1] = i;
+       		ix1+=1;
+       ####### get rbxl and rblr #######
+       #double R2, R1, Z2, Z1, Rb1, Rb2, Zx;
+       print("ix1 is %d"%ix1);
+       if(ix1==2):
+       	Zx  = zmaxis;
+       	ix2 = izblr[0];
+       	ix3 = izblr[1];
+       	R2 = rbbbs[ix2+1]; R1 = rbbbs[ix2];
+       	Z2 = zbbbs[ix2+1]; Z1 = zbbbs[ix2];
+       	Rb1 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
+       	R2 = rbbbs[ix3+1]; R1 = rbbbs[ix3];
+       	Z2 = zbbbs[ix3+1]; Z1 = zbbbs[ix3];
+       	Rb2 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
+       	print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
+       	if(Rb1 >= Rb2):
+       		self.rbxl = Rb2;
+       		self.rbxr = Rb1;
+       	else:
+       		self.rbxl = Rb1;
+       		self.rbxr = Rb2;
+       else:
+       	print("plasma boundary has problems\n");
+       	self.rbxl = rbbbs.min(); 
+       	self.rbxr = rbbbs.max();
+       
        	##high-field side initialization psi_R_l_spl;
-	ddR = 0.02
-	nR = 100
-
-        rmaxis	= self.data['rmaxis'][0];
-	simag	= self.data['simag'][0];
-	psiw	= self.data['psiw'][0];
-
-	dR = -(rmaxis-self.rbxl+ddR)/float(nR-1);
-	Rs = np.zeros(nR,dtype='float');
-	psi_Rs = np.zeros(nR,dtype='float');
-	for i in range(nR):
-		Rs[i] = rmaxis+dR*float(i);
-		psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
-
-	psi_Rs[0]	= 0.;
-        self.f_RZ_Nl   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
-
-	###low-field side initialization psi_R_l_spl;
-	dR = -(rmaxis-self.rbxr-ddR)/float(nR-1);
-	for i in range(nR):
-		Rs[i] = rmaxis+dR*float(i);
-		psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
-	psi_Rs[0] 	= 0.; 
-        self.f_RZ_Nr   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
-
+       ddR = 0.02
+       nR = 100
+       
+       rmaxis	= self.data['rmaxis'][0];
+       simag	= self.data['simag'][0];
+       psiw	= self.data['psiw'][0];
+       
+       dR = -(rmaxis-self.rbxl+ddR)/float(nR-1);
+       Rs = np.zeros(nR,dtype='float');
+       psi_Rs = np.zeros(nR,dtype='float');
+       for i in range(nR):
+       	Rs[i] = rmaxis+dR*float(i);
+       	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
+       
+       psi_Rs[0]	= 0.;
+       self.f_RZ_Nl   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
+       
+       ###low-field side initialization psi_R_l_spl;
+       dR = -(rmaxis-self.rbxr-ddR)/float(nR-1);
+       for i in range(nR):
+       	Rs[i] = rmaxis+dR*float(i);
+       	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
+       psi_Rs[0] 	= 0.; 
+       self.f_RZ_Nr   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
+### End of class
 	 
 if __name__ == '__main__':
     #from pylab import *
