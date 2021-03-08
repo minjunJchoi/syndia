@@ -37,9 +37,9 @@ class ProfFunc(object):
         with open(Te_fn, 'r') as f:
             self.psin_Te, self.Te = np.loadtxt(f, unpack=True)
 
-        print 'geqdsk file = {}'.format(geqdsk_fn)
-        print 'Te file = {}'.format(Te_fn)
-        print 'ne file = {}'.format(ne_fn)
+        print('geqdsk file = {}'.format(geqdsk_fn))
+        print('Te file = {}'.format(Te_fn))
+        print('ne file = {}'.format(ne_fn))
 
     # B = f(R, z) [T] ######################## different interpolation may result in difference
     def F_B(self, R, z):

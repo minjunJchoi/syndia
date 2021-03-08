@@ -53,16 +53,16 @@ class KstarEceiInfo(object):
             self.toff = self.tt[0]+0.001
             self.fs = dset.attrs['SampleRate'][0]*1000.0  # in [Hz]
             self.bt = dset.attrs['TFcurrent']*0.0995556  # [kA] -> [T]
-            self.mode = dset.attrs['Mode'].strip()
-            if self.mode is 'O':
+            self.mode = dset.attrs['Mode'].strip().decode()
+            if self.mode == 'O':
                 self.hn = 1  # harmonic number
-            elif self.mode is 'X':
+            elif self.mode == 'X':
                 self.hn = 2
             self.lo = dset.attrs['LoFreq']
             self.sf = dset.attrs['LensFocus']
             self.sz = dset.attrs['LensZoom']
 
-            print 'ECEI file = {}'.format(self.fname)
+            print('ECEI file = {}'.format(self.fname))
 
     def get_abcd(self, sf, sz, Rinit):
         # ABCD matrix
