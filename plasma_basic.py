@@ -18,6 +18,14 @@ Tongnyeol Rhee
 colii_callen: Bug modification, temperature unit is eV not keV
 10 January 2019
 Tongnyeol Rhee
+
+colii_Goldston: Goldstone collision frequency shown in his boot eq 11.24
+11 Janunary 2019
+Tongnyeol Rhee
+
+Converted to Python3 
+by Tongnyeol Rhee
+05 Dec. 2019
 """
 import numpy as np
 me = 9.10938215e-31     # electron rest mass
@@ -27,8 +35,8 @@ mup = 1.007276466812    # proton Isotope mass
 mi = mp/mup             # Atomic mass unit
 mud = 2.01410178        # Deterium Isotope mass
 mut = 3.0160492         # Tritium Isotope mass 
-md  = mud*mi            # Deterium mass in kg
-mt  = mut*mi            # Tritium mass in kg
+md  = mud*mp            # Deterium mass in kg
+mt  = mut*mp            # Tritium mass in kg
 
 cv=2.99792458e8         # speed of light im m/s
 eV2J = 1.602176565e-19  # Joule energy of 1 electron volt
@@ -180,9 +188,9 @@ def AlfvenW(density,mu,B,q,R):
         print Alfven gap frequency
     """
     freq = Alfvenv(density,mu,B)/(2.*q*R)/2./np.pi;
-    print "TAE frequency is %10.3f kHz"%(freq/1.e3)
-    print "EAE frequency is %10.3f kHz"%(2.*freq/1.e3)
-    print "NAE frequency is %10.3f kHz"%(3.*freq/1.e3)
+    print( "TAE frequency is %10.3f kHz"%(freq/1.e3))
+    print( "EAE frequency is %10.3f kHz"%(2.*freq/1.e3))
+    print( "NAE frequency is %10.3f kHz"%(3.*freq/1.e3))
 
 def thermal_i(mu,Ti):
     """
@@ -243,7 +251,7 @@ def col_ei(Te, nev, Zev = 1.0):
         Te : eV unit
         nev : electron density in m^-3 unit
     """
-    return 2.e-12 * Zev*nev*lnlambda(Te,nev)/Te**1.5
+    return 2.91e-12 * Zev*nev*lnlambda(Te,nev)/Te**1.5
 
 def col_tokamak(Te, nev, R, eps, q):
     """
@@ -368,13 +376,12 @@ def coli_nrl(nev,Ti,mu, zi=None):
     """
     ion collision rate
     Ti: eV
-    nev: density
+    nev: density in m^-3 unit
     mu: ion mass ratio to proton
     """
     if zi == None:
         zi=1.
-    nev = nev/1.e6
-    return 4.80e-8*nev*lnlambda(Ti,nev*1.e6)/Ti**(1.5)/np.sqrt(mu)*zi**4
+    return 4.80e-8*nev*lnlambda(Ti,nev)/Ti**(1.5)/np.sqrt(mu)*zi**4
 
 def colii_callen(mu,Ti,Te,nev,Zi=None):
     """
@@ -388,6 +395,23 @@ def colii_callen(mu,Ti,Te,nev,Zi=None):
     if Zi==None:
         Zi=1.
     return np.sqrt(me/mp/mu)*(Te/Ti)**(1.5)*Zi**2/np.sqrt(2)*cole(Te,nev);
+
+def colii_Goldston(mu,Ti,Te,nev,Zi=None):
+    """
+    ion ion collision frequency presented in Goldstone boot eq 11.24
+    mu: ion mass ratio to proton
+    Ti : ion Temperatrue by eV
+    Te : electron temperature by eV
+    nev : density in m^-3
+    Zi: charge density to elctron charge
+    """
+    if Zi is None:
+        Zi = 1.;
+    d1  = nev*Zi**4*eV2J**2.5*lnlambda(Te,nev)
+    d2  = 12.*np.pi**(1.5)*epsilon**2*(mp*mu)**0.5*Ti**1.5
+    return d1/d2
+
+
 
 def ev2gamma(Energy):
     v = ev2ve(Energy);
@@ -460,17 +484,17 @@ def gyration_position(B, X, vpe, rho,phase):
             rpe[0] = rho2; 
             rpe[1] = -rho2*BxBy; 
         else: 
-	    Xout[0] =Xo3 ; 
-	    Xout[1] =Yo3 ;
-	    rpe[0] = -rho2;
-	    rpe[1] = rho2*BxBy;
-	rpe[2] = 0.; 
+            Xout[0] =Xo3 ; 
+            Xout[1] =Yo3 ;
+            rpe[0] = -rho2;
+            rpe[1] = rho2*BxBy;
+        rpe[2] = 0.; 
     else:
-	rpe[0] = 0.;
-	rpe[1] = rho;
-	rpe[2] = 0.;
+        rpe[0] = 0.;
+        rpe[1] = rho;
+        rpe[2] = 0.;
         if(X[1] <0):
-		rpe[2] *= -1.; 
+                rpe[2] *= -1.; 
     dth = -np.mod(phase,2.*np.pi); 
     Xout = ArbitraryRotate(rpe, dth,B); 
     Xout[0] += X[0]; 
@@ -484,36 +508,36 @@ def gyration_velocity( B, X, vpe, rho,  phase):
     rc = np.zeros(3,dtype='float')
     Babs = np.sqrt(np.dot(B,B));
     if(B[1] !=0.): 
-        BxBy = B[0]/B[1];
-    	BxBy2 = BxBy*BxBy;
-    	rho2 = rho / np.sqrt(1 + BxBy2);
-    	rho3 = rho / np.sqrt(1 + 1./BxBy2);
-    	Xo2 = X[0] +rho2;
-    	Yo2 = X[1] -rho2*BxBy;
-    	Xo3 = X[0] -rho2;
-    	Yo3 = X[1] +rho2*BxBy;
-    	Ro2 = Xo2*Xo2 + Yo2*Yo2;
-    	Ro3 = Xo3*Xo3 + Yo3*Yo3;
-    	if(Ro2 >= Ro3): 
-    	    Xout[0] =Xo2 ; 
-    	    Xout[1] =Yo2 ;
-            rpe[0] = rho2;
-            rpe[1] = -rho2*BxBy;
-    	 
-    	else: 
-    	    Xout[0] =Xo3 ; 
-    	    Xout[1] =Yo3 ;
-    	    rpe[0] = -rho2;
-    	    rpe[1] = rho2*BxBy;
-    	 
-    	rpe[2] = 0.;
+            BxBy = B[0]/B[1];
+            BxBy2 = BxBy*BxBy;
+            rho2 = rho / np.sqrt(1 + BxBy2);
+            rho3 = rho / np.sqrt(1 + 1./BxBy2);
+            Xo2 = X[0] +rho2;
+            Yo2 = X[1] -rho2*BxBy;
+            Xo3 = X[0] -rho2;
+            Yo3 = X[1] +rho2*BxBy;
+            Ro2 = Xo2*Xo2 + Yo2*Yo2;
+            Ro3 = Xo3*Xo3 + Yo3*Yo3;
+            if(Ro2 >= Ro3): 
+                Xout[0] =Xo2 ; 
+                Xout[1] =Yo2 ;
+                rpe[0] = rho2;
+                rpe[1] = -rho2*BxBy;
+             
+            else: 
+                Xout[0] =Xo3 ; 
+                Xout[1] =Yo3 ;
+                rpe[0] = -rho2;
+                rpe[1] = rho2*BxBy;
+             
+            rpe[2] = 0.;
      
     else:
-    	rpe[0] = 0.;
-    	rpe[1] = rho;
-    	rpe[2] = 0.;
-        if(X[1] <0):
-    	    rpe[2] *= -1.;
+            rpe[0] = 0.;
+            rpe[1] = rho;
+            rpe[2] = 0.;
+            if(X[1] <0):
+                 rpe[2] *= -1.;
     
     dth = -np.mod(phase,2.*np.pi); 
     rc = ArbitraryRotate(rpe, dth,B); 
@@ -547,7 +571,7 @@ def ArbitraryRotate( p,  theta,  ro):
     return q;
  
 if __name__ == '__main__' :
-    print "hello"
+    print("hello")
     global nu, vc
     Te  = 3.e3    #paper parameter
     nev = 5.e19   #paper parameter
@@ -558,12 +582,12 @@ if __name__ == '__main__' :
     Ef  = 100.e3
     vc  = vcrit(Te)
     nu  = collnu(Te,nev)
-    print 'Ef = 1MeV'
-    print 'Te=%7.3fe3, nev is '%(Te/1000.), nev
-    print 'Vcrit is ',(vc)**(1./3.)
-    print 'Debye length is ',Debye(Te,nev)
-    print 'Collision nu is ',nu
-    print 'Collision pitch angle ', collnud(Te,nev,ev2vi(Ef,2.))
+    print( 'Ef = 1MeV')
+    print( 'Te=%7.3fe3, nev is '%(Te/1000.), nev)
+    print( 'Vcrit is ',(vc)**(1./3.))
+    print( 'Debye length is ',Debye(Te,nev))
+    print( 'Collision nu is ',nu)
+    print( 'Collision pitch angle ', collnud(Te,nev,ev2vi(Ef,2.)))
 
 
     def dXdt(t,y):
