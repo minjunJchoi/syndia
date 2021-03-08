@@ -53,7 +53,6 @@ mc2 = me*c**2
 #F_ne = lambda s: 2.08039e+19
 
 def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], [rad/s], harmonic number
-    th = th*0
     m = float(m)
 
     # characteristic frequencies
