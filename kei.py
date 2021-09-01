@@ -13,6 +13,8 @@ import numpy as np
 
 class KstarEceiInfo(object):
     def __init__(self, shot, clist):
+        self.shot = shot
+
         if 5073 < shot and shot < 6393:
             self.data_path = '/eceidata/exp_2011/ECEI/DATA_H5/'
         elif 7065 < shot and shot < 8225:
@@ -99,7 +101,7 @@ class KstarEceiInfo(object):
                    np.array([[1,0],[0,1.52]])).dot(
                    np.array([[1,65],[0,1]])).dot(
                    np.array([[1,0],[(1-1.52)/(800*1.52),1/1.52]]))
-            if shot > 12297:  # since 2015 campaign
+            if self.shot > 12297:  # since 2015 campaign
                 abcd = abcd.dot(
                    np.array([[1,520-sf+590-9.2],[0,1]])).dot(
                    np.array([[1,0],[(1.52-1)/(-1100),1.52]])).dot(
