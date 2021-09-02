@@ -228,8 +228,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
     theta[0] = theta[1] + (theta[1]-theta[2])
 
-    print('Rcold, Rpath ends')
-    print(Rcold, Rp[0], Rp[-1]) # EC frequency [GHz]
+    print('Rcold, Rpath ends = ', Rcold, Rp[0], Rp[-1]) # cold resonance and beam path ends
 
     # interpolation (for better accuracy) and change direction from hfs to lfs
     idx = np.arange(Rp.size-1,-1,-1)

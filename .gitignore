@@ -1,6 +1,7 @@
 geqdsk.pyc
 geqdsk_dk.pyc
 *.pyc
+*.swp
 data/
 .ipynb_checkpoints/
 fort.22
