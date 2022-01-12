@@ -211,7 +211,7 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     idx1 = ridx[0][0]
     idx2 = ridx[0][-1]
 
-    # print('Bt at R=1.8 m = {:0}'.pf.F_B(1.8, 0)) # Bt at 1.8 m [Bt]
+    #print('Bt at R=1.8 m = {:0}'.format(pf.F_B(1.8, 0))) # Bt at 1.8 m [Bt]
     # Rcold
     cidx = np.where(np.abs(fRz - freq) == np.abs(fRz - freq).min())
     Rcold = Rp[cidx]

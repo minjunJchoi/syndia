@@ -33,12 +33,13 @@ class KstarEceiInfo(object):
             self.data_path = '/eceidata2/exp_2018/'
 
         self.clist = expand_clist(clist)
+        cnum = len(self.clist)
 
         if shot < 19392:
-            self.cnidx1 = 6
+            cnidx1 = 6
             self.dev = clist[0][5]
         else:
-            self.cnidx1 = 7
+            cnidx1 = 7
             self.dev = clist[0][5:7]
 
         # file name
@@ -65,6 +66,15 @@ class KstarEceiInfo(object):
             self.sz = dset.attrs['LensZoom']
 
             print('ECEI file = {}'.format(self.fname))
+    
+        # get vn, fn numbers and ece frequency [GHz]
+        self.vn_list = np.zeros(cnum)
+        self.fn_list = np.zeros(cnum)
+        self.ece_freq = np.zeros(cnum)
+        for cn, chname in enumerate(self.clist):
+            self.vn_list[cn] = int(chname[(cnidx1):(cnidx1+2)])
+            self.fn_list[cn] = int(chname[(cnidx1+2):(cnidx1+4)])
+            self.ece_freq[cn] = (self.fn_list[cn] - 1)*0.9 + 2.6 + self.lo
 
     def get_abcd(self, sf, sz, Rinit):
         # ABCD matrix
