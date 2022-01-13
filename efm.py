@@ -1,5 +1,5 @@
 """
-ECE intensity forward modeling
+ECE intensity forward modeling; modified for both ECE and ECEI (2022.01.12)
 Repo : https://github.com/minjunJchoi/syndia
 Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam
@@ -12,6 +12,7 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 import time
 
+from kstar_ece_info import *
 from kstar_ecei_info import *
 from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
@@ -36,10 +37,15 @@ class EceFwdMod(object):
     def set_channel(self, shot, clist):
         self.shot = shot
 
-        ## If ECEI
-        self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
-        self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
-        self.ecei = KstarEceiInfo(shot, clist)
+        #### diagnostics specific parameters 
+        if 'ECEI' in clist[0]:
+            self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
+            self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
+            self.diag = KstarEceiInfo(shot, clist)
+        else:
+            self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
+            self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
+            self.diag = KstarEceInfo(shot, clist)
 
     def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=1):
         ## bpath interp TORBEAM or Ray tracing
@@ -64,7 +70,7 @@ class EceFwdMod(object):
             torbeam_prof(self.geqdsk_fn, self.pf)
 
         ## loop for channels
-        cnum = len(self.ecei.clist)
+        cnum = len(self.diag.clist)
 
         int_meas = np.zeros(cnum) # ECE intensity measured;
         # you use this to make a 'synthetic' ECE image from simulation data to compare with the measured ECE image
@@ -80,44 +86,39 @@ class EceFwdMod(object):
         # sub ray dz
         dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
 
-        for cn in range(0, cnum):
-            ## If ECEI
-            # channel numbers
-            vn = int(self.ecei.clist[cn][(self.ecei.cnidx1):(self.ecei.cnidx1+2)])
-            fn = int(self.ecei.clist[cn][(self.ecei.cnidx1+2):(self.ecei.cnidx1+4)])
+        for cn in range(cnum):
             # define sub rays
-            fsub = np.linspace((fn-1)*0.9 + 2.6 + self.ecei.lo + fstart, (fn-1)*0.9 + 2.6 + self.ecei.lo + fend, Nf) # frequency [GHz] of sub rays
+            fsub = np.linspace(self.diag.ece_freq[cn] + fstart, self.diag.ece_freq[cn] + fend, Nf) # frequency [GHz] of sub rays
             zsub = np.zeros(dz.size)
             asub = np.zeros(dz.size)
             S = 0
             ## loop over sub rays of a single channel
             for i in range(dz.size):
-                # for ECEI; vacuum approximation until Rinit
-                zsub[i], asub[i] = vac_beam_path(self.ecei, Rinit, vn, dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
-
-                # for ECE on midplane
-                # zsub[i] = dz[i]
-                # asub[i] = 0
+                if 'ECEI' in self.diag.clist[0]: ## If ECEI; vacuum approximation until Rinit
+                    zsub[i], asub[i] = vac_beam_path(self.diag, Rinit, self.diag.vn_list[cn], dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
+                else: # for ECE on midplane
+                    zsub[i] = dz[i]
+                    asub[i] = 0
 
                 for j in range(fsub.size):
                     # find beam path
                     if torbeam == 1:
-                        Rp, zp = run_torbeam(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit)
+                        Rp, zp = run_torbeam(self.diag.hn, fsub[j], asub[i], zsub[i], Rinit)
                         #plt.plot(Rp, zp, 'go-')
-                        #Rprt, zprt = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
+                        #Rprt, zprt = ray_tracing(self.diag.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
                         #plt.plot(Rprt,zprt, 'bx-')
                         #plt.show()
                     else:
-                        Rp, zp = ray_tracing(self.ecei.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
+                        Rp, zp = ray_tracing(self.diag.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
 
                     # find proper range of beam path and make interpolated beam path
-                    Rp, zp, theta = set_beam_path(Rp, zp, self.ecei.hn, fsub[j], pstart, pend, pint, self.pf)
+                    Rp, zp, theta = set_beam_path(Rp, zp, self.diag.hn, fsub[j], pstart, pend, pint, self.pf)
 
                     # profile function along path
                     s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, self.pf, 0)
 
                     # calculate ECE intensity along path
-                    ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.ecei.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
+                    ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.diag.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
 
                     print('tau = {:g}'.format(integrate.trapz(ams,x=s)))
                     print('ece_int Iece = {:g}'.format(ece_int))
