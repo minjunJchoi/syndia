@@ -1,5 +1,3 @@
-import os, sys
-sys.path.insert(0, os.pardir)
 import pickle
 import scipy.io as sio
 import matplotlib.pyplot as plt
@@ -48,7 +46,7 @@ clist = ['ECEI_GT0101-2408']
 fname = '/home/users/mjchoi/syndia/run/data/ecei_pos_{:d}_{:s}.pkl'.format(shot, clist[0])
 A.set_channel(shot, clist)
 
-Rch, zch, _, rad_temp, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=1)
+Rch, zch, _, rad_temp, abs_temp = A.run(fstart=0,fend=0,Nf=1,zstart=0,zend=0,Nz=1,torbeam=0)
 
 with open(fname, 'wb') as fout:
     pickle.dump([clist, Rch, zch, rad_temp, abs_temp], fout)
