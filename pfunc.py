@@ -58,8 +58,7 @@ class ProfFunc(object):
             ####### add B field strenth 2D perturbation here #######
             # B = B + delta_B(R, z)
             ####### add B field strenth 2D perturbation here #######
-        #return B
-        return B*1.01 ## B-field correction for toroidal field error 
+        return B
 
     # Bvec = [Br, Bz, Bt] [T]
     def F_Bvec(self, R, z):
