@@ -47,7 +47,7 @@ class EceFwdMod(object):
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
             self.diag = KstarEceInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=1):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0):
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
