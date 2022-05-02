@@ -590,7 +590,7 @@ class geqdsk_dk(Geqdsk):
           from scipy import interpolate
           r   = self.data['r'][0]
           z   = self.data['z'][0]
-          self.f=interpolate.interp2d(r,z,self.get('psirz'),kind='quintic')
+          self.f=interpolate.interp2d(r,z,self.get('psirz'),kind='cubic')
           self.psi_inter = True
       else:
           pass;
@@ -606,7 +606,7 @@ class geqdsk_dk(Geqdsk):
           z   = self.data['z'][0]
           psi_mag = self.get('simag')
           psiw    = self.get('psiw')
-          self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='quintic')
+          self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='cubic')
           self.psi_inter_normal = True
         else:
             pass;
