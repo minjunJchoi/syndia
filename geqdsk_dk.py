@@ -222,6 +222,19 @@ def Closed_Lines(self,qv,the0,ndphi = 1000):
         yi[1,:] : Z values
         yi[2,:] : phi values
         yi[3,:] : theta values
+def Closed_Thetas(self,psiv,ndphi = 1000): 
+    Closed theta path
+    inputs
+        psiv : normalized initial psi value
+        ndphi: how fine grid
+    returns
+        yi
+          yi[0,:] : R values
+          yi[1,:] : Z values
+          yi[2,:] : phi values
+          yi[3,:] : theta values
+        length: path length
+
 
 def transit_path(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,RZpos = None):
     Particle orbit during 1 poloidal return
@@ -379,6 +392,81 @@ Converted to Python 3
 05 December 2019
 by Tongnyeol Rhee
 
+Add routine for closed theta path
+def Closed_Theta(self,psiv,ndphi = 1000)
+20 May 2020
+Tongnyeol Rhee
+
+------------------------------------
+Add Reverse IP to geqdsk
+Add transit_path2 which calculate transit path on Zaxis criteria
+    New function is working for trapped particles.
+
+Add Plasma volume 
+05 June 2020
+Tongnyeol Rhee
+
+-----------------------------------
+Modify Closed_Thetas
+Add dphi_dtheta to calculate q in the geqdsk_dk code.
+Using dphi_dtheta, Closed_Thetas calcualte Closed_Thetas
+04 Sep 2020 
+Tongnyeol Rhee
+
+------------------------------------
+Modify int_rbx for the case of R1==R2.
+23 Sep. 2020
+Tongnyeol Rhee
+
+Correction Rb2 = R2 ==> Rb2 = R1
+11 Mar. 2021
+Tongnyeol Rhee
+
+------------------------------------
+Function addition
+def Flux_surface_theta(self,R,Z,ndphi = 50000):
+   This function calculcate theta which satisfy dphi/dtheta = q
+   input: R  R value
+          Z  Z value
+   return: new q value and theta (in radian)
+def inside_LCFS(self,R,Z):
+   This function test inside LCFS
+   input: R R value
+          Z Z value
+   return: True of false
+11 Mar 2021 
+Tongnyeol Rhee
+    
+------------------------------------
+Function addition
+    def Flux_surface_dthetadR(self,R,Z,ndphi = 500):
+       This function calculcate theta which satisfy dphi/dtheta = q
+       input: R  R value
+              Z  Z value
+       return: dtheta/dR (in radian)
+    def Flux_surface_dthetadZ(self,R,Z,ndphi = 500):
+       This function calculcate theta which satisfy dphi/dtheta = q
+       input: R  R value
+              Z  Z value
+       return: dtheta/dZ (in radian)
+12 Mar 2021
+Tongnyeol Rhee
+
+------------------------------------
+Function addition
+    def pol2tor(self, rho_pol):
+       This function returns normalized toroidal flux at a give normalized poloidal flux
+       input: normalized poloidal flux
+       return: normalized toroidal flux
+    def tor2pol(self, rho_tor):
+       This function returns normalized polidal flux at a give normalized toroidal flux
+       input: normalized toroidal flux
+       return: normalized poloidal flux
+24 Jan 2022
+Tongnyeol Rhee
+
+
+
 ===========Example========================================
 #Example:
 ## initialization of geqdks
@@ -412,9 +500,9 @@ plt.show()
 
 #Fast ion drift orbit
 E       = 90.e3 #90keV ion
-mu      = 2.    #ion mass ratio to proton mass
+mu      = pb.mud    #ion mass ratio to proton mass
 charge  = 1.    #ion charge ratio to e
-Lambda  = 0.9   #v||^2/V^2
+Lambda  = 0.2   #v||^2/V^2
 sigma   = 1.;   # 1 is parallel and -1 is anti parallel to magnetic field
 psiN    = 0.8   # 
 
@@ -448,10 +536,11 @@ plt.plot(yi3[:,0],yi3[:,2],'k-')
 
 plt.show()
 
+
 """
 
 class geqdsk_dk(Geqdsk):
-    def __init__(self,filename = None,gR0B0=False,BDS=True):
+    def __init__(self,filename = None,gR0B0=False,BDS=True, IsReverse=False):
         """
         Contructor for drift kinetic equation equilibrium
         """
@@ -460,12 +549,22 @@ class geqdsk_dk(Geqdsk):
             Geqdsk.__init__(self);
         else:
             self.data = {}
-            Geqdsk.__init__(self,filename=filename,gR0B0=gR0B0,BDS=BDS); 
+            Geqdsk.__init__(self,filename=filename,gR0B0=gR0B0,BDS=BDS,IsReverse=IsReverse); 
             self.init_rbx()
+            self.IsReverse=IsReverse;
+            self.pol2tor_exist = False;
 
     def __del__(self):
         pass
 
+    def inside_BDs(self,Rt,Zt):
+           """
+           Return True if inside boundary
+           """
+           if( self.BDs[0]<=Rt<=self.BDs[1] and self.BDs[2]<=Zt<=self.BDs[3]):
+                  return True;
+           else:
+                  return False;
     def get_lcfs_psi(self):    #return last closed flux surface
       """
       Return last closed flux surface calculated by using interpolation method
@@ -507,7 +606,7 @@ class geqdsk_dk(Geqdsk):
           z   = self.data['z'][0]
           psi_mag = self.get('simag')
           psiw    = self.get('psiw')
-          self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='cubic')
+          self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='quintic')
           self.psi_inter_normal = True
         else:
             pass;
@@ -631,7 +730,7 @@ class geqdsk_dk(Geqdsk):
         """
         return 1./R * np.sqrt( self.f(R,Z,dy=1)[0]**2 + self.f(R,Z,dx=1)[0]**2)
         
-    def Bxyz(self,x,y,z):
+    def Bxyz2(self,x,y,z):
         """
         Return bx, by, and bz at the x,y,z coordinate
         """
@@ -644,6 +743,18 @@ class geqdsk_dk(Geqdsk):
         bz    = Bvec[1];
         #print 'br,bphi,cos,sin',Bvec[0],Bvec[2],np.cos(phi),np.sin(phi)
         return np.array([bx,by,bz])
+
+    def Bxyz(self,x,y,z):
+        """
+        Return bx, by, and bz at the x,y,z coordinate
+        """
+        r = np.sqrt(x**2+y**2);
+        z = z;
+        Bvec  = self.B_field(r,z);
+        phi   = np.arctan2(y,x);
+        cosp  = np.cos(phi); sinp = np.sin(phi);
+        [bx,by] = np.array( [[cosp,-sinp],[sinp,cosp]]).dot([Bvec[0],Bvec[2]])
+        return np.array([bx,by,Bvec[1]])
     
     def local_pitch(self,R,Z):
         """
@@ -1175,6 +1286,27 @@ class geqdsk_dk(Geqdsk):
 
         return np.array([f0,f1,f2,f3,f4,f5]);
 
+    def dXdt_Lorbit_RE_normal(self,t,y,arg1):
+        """
+        Nomrlizaed dX/dT by C and Omega
+        y is gamma v / C where C is speed of light
+        arg1[0] is C/(Omega gamma)
+        arg1[1] is B at magnetic axis
+        """
+        COg     = arg1[0]
+        X,Y,Z   = y[0:3]*COg;
+        Bvec    = self.Bxyz(X,Y,Z)/arg1[1];
+
+        #[f0, f1, f2]  = y[3:6]
+        f0      = y[3]
+        f1      = y[4]
+        f2      = y[5]
+        f3      = f1  *Bvec[2] - f2  *Bvec[1];
+        f4      = f2  *Bvec[0] - f0  *Bvec[2];
+        f5      = f0  *Bvec[1] - f1  *Bvec[0];
+
+        return np.array([f0,f1,f2,f3,f4,f5]);
+
     def dXdt(self,t,y,arg1):
         vpa = y[3];
         mum = y[4];
@@ -1213,7 +1345,20 @@ class geqdsk_dk(Geqdsk):
         #parallel velocity
         dvdt = -1./star/mh*np.dot(data['b']+rhopa*data['curl_b'],mu_ga*data['Grad_B'])
 
-        return np.array([dxdt[0], dxdt[1]/y[0],dxdt[2],dvdt,0.])
+        return np.array([dxdt[0], dxdt[1]/y[0],dxdt[2],dvdt,0.]) 
+
+    def xvk1(self,nstp, xk, vk, qm):
+           nstp1 = 1./float(nstp);
+           [B1, B2, B3] = self.Bxyz(xk[0],xk[1],xk[2]);
+           Bk = np.sqrt(B1**2+B2**2+B3**2);
+           bk  = np.array( [ [ 0., -B3, B2],[B3,0.,-B1],[-B2,B1,0.]])/Bk;
+           bk2 = np.matmul(bk,bk);
+           hwk = -Bk/self.data['bcentr'][0]*nstp1;
+           bexp = np.sin(hwk)*bk + (1.-np.cos(hwk))*bk2
+           bexp[0,0] += 1.; bexp[1,1] += 1.; bexp[2,2] += 1.;
+           vk1 = bexp.dot(vk);#vk + np.sin(hwk)*bk.dot(vk)+(1.-np.cos(hwk))*bk2.dot(vk);
+           xk1 = xk + nstp1/qm/self.data['bcentr'][0]*vk1;
+           return xk1,vk1;
 
     def psin_RZ(self,psi_n, sigma = 1.):
         """
@@ -1438,6 +1583,101 @@ class geqdsk_dk(Geqdsk):
             yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t,the0+float(i+1)*dphi/qv])));
         return yi;
 
+    def dphi_dtheta(self,psiv,ndphi = 5000, Debug = False): 
+        """
+        New q value
+        inputs
+            psiv : normalized initial psi value
+            ndphi: how fine grid
+        returns
+            new q value
+         """
+        R0 = self.psiN_RZ(psiv);
+        Z0 = self.get('zmaxis');
+
+        #move to the0
+
+        qv = self.q_inter(psiv);
+        dphi = np.pi*2./float(ndphi-1)*qv
+        theta_rot = 0.;
+
+        #initialization of ode solver
+        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False, 
+                max_step = 100000);
+        r.set_initial_value([R0,Z0],0.);
+
+        nSig = 2;
+        Sig = 0;
+        iind	= 0;
+        while Sig<nSig and iind <= ndphi*2:
+            #time evolution
+            yold = r.y;
+            r.integrate(r.t+dphi);
+            #End condition check
+            if r.y[1]==Z0:
+                   Sig += 1;
+            elif (yold[1]-Z0)*(r.y[1]-Z0)<0.: 
+                   Sig += 1;
+            iind += 1;
+                
+
+        dZ = r.y[1]-yold[1];
+        dr = (Z0-yold[1])/dZ;
+        t = r.t-dphi+dphi*dr
+        qnew = t/np.pi/2.;
+        if Debug:
+            print("qold %f and qnew %f\n"%(qv,qnew));
+        return qnew;
+
+
+    def Closed_Thetas(self,psiv,ndphi = 5000): 
+        """
+        closed theta
+        inputs
+            psiv : normalized initial psi value
+            ndphi: how fine grid
+        returns
+            yi
+              yi[0,:] : R values
+              yi[1,:] : Z values
+              yi[2,:] : phi values
+              yi[3,:] : theta values
+            length: path length
+         """
+        R0 = self.psiN_RZ(psiv);
+        Z0 = self.get('zmaxis');
+
+        #move to the0
+
+        #qv = self.q_inter(psiv);
+        qv = self.dphi_dtheta(psiv,ndphi = ndphi, Debug=False);
+        dphi = np.pi*2.*qv/float(ndphi)
+        theta_rot = 0.;
+
+        #initialization of ode solver
+        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False, 
+                max_step = 100000);
+        r.set_initial_value([R0,Z0],0.);
+
+        #for i in range(ndphi):
+        #    r.integrate(r.t-dphi);
+
+        #dphi = 2.*np.pi*qv/ndphi;
+        yi = np.array([r.y[0],r.y[1],r.t,0.]);
+        for i in range(ndphi-1):
+            r.integrate(r.t+dphi);
+            yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t,float(i+1)*dphi/qv])));
+        length = 0.;
+        yi = np.vstack((yi,np.array([R0,Z0,r.t,float(i+1)*dphi/qv])));
+
+        for k in range(ndphi):
+               R2 = yi[k+1,0]; phi2 = yi[k+1,2]; Z2=yi[k+1,1];
+               R1 = yi[k,0];   phi1 = yi[k,2];   Z1=yi[k,1];
+               length += np.sqrt( (R2*np.cos(phi2) - R1*np.cos(phi1))**2 +
+                         (R2*np.sin(phi2) - R1*np.sin(phi1))**2 +
+                         (Z2-Z1)**2);
+        return yi,length;
+
 
     def transit_path(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,
             RZpos = None, N_Max=100000,DTcoef=1., nSig=2,quiet = False):
@@ -1567,13 +1807,105 @@ class geqdsk_dk(Geqdsk):
 
         return np.array(yi),t,dt,Omeg;
 
-    def transit_path_RE(self, E, sigma,Lambda,psiN, Is_Toroidal=False, N_Max = 10000000):
+    def transit_path2(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,
+            N_Max=100000,DTcoef=1., nSig=2,quiet = False, RZVAL = None):
+        """
+        Particle orbit during 1 poloidal turn  to calculate wphi and wtheta
+        E is energy in eV unit
+        mass is proton ratio
+        charge is unit e ratio, proton is 1, electron is -1, alpha is 2
+        sigma is parallel or antiparallel
+        Lambda is v||^2/v^2
+        psi is 0 to 1
+
+        """
+
+        if(RZVAL is None):
+               R0, Z0   = self.psin_RZ(psiN,sigma=sigma); 
+        else:
+               R0, Z0 = RZVAL[0], RZVAL[1];
+        phi0 = 0.;
+        v    = pb.ev2vi(E,mass);
+        vpa  = v*np.sqrt(Lambda)*sigma;
+        vpe2  = v**2-vpa**2;
+        if not quiet: 
+               print("R0 and Z0 is %f %f"%(R0,Z0));
+
+        Zhe  = charge*pb.eV2J;
+        mq   = pb.mp*mass/Zhe;
+        mh   = pb.mp*mass;
+        B0   = np.sqrt( self.B2(R0,Z0) );
+        Rm   = self.data['rmaxis'][0]
+        Zm   = self.data['zmaxis'][0]
+
+        psip = self.f(R0,Z0)[0]-self.get('simag');
+        psip_N = psip/self.get('psiw');
+        gv = self.g_inter(psip_N)
+        Pphi = mh  * vpa * gv / B0 - Zhe * psip;
+        mu_m = 0.5 * mh  * vpe2 / B0
+        print("R0 %f Z0 %f Lambda %f Pphi %f\n"%(R0,Z0,Lambda*sigma,Pphi/(Zhe*self.data['psiw'][0])));
+        #print("sigma %d Lambad %f vpa %f psip %f\n"%(sigma, Lambda, vpa,psip));
+
+        mum  = mu_m
+        #dt   = self.data['rmaxis'][0]*2.*np.pi/abs(vpa)/1000.;
+        dt   = mq/(B0/np.pi/2.)*DTcoef;
+
+        r    = ode(self.dXdt).set_integrator('vode',method='adams',with_jacobian=False,
+                max_step=1000)
+        r.set_initial_value([R0,phi0,Z0,vpa,mum],0.)
+        r.set_f_params([Zhe,mq,mh]);
+
+        Inds = 0;
+        yi   = [[R0,phi0,Z0,vpa]]
+        Sig = 0;
+
+        SS = 0.;
+        iind	= 0;
+
+        rleft = self.get('rleft') + self.get('rdim')*0.005;
+        rright = rleft+self.get('rdim')*0.995;
+        zbot  = self.get('zmid')-self.get('zdim')*0.995/2.
+        ztop  = self.get('zmid')+self.get('zdim')*0.995/2.
+
+        while Sig<nSig and iind <= N_Max and rleft<=r.y[0]<=rright and zbot<=r.y[2]<=ztop :
+            #time evolution
+            yold = r.y;
+            r.integrate(r.t+dt);
+            yi += [r.y[0:4]];
+
+            #End condition check
+            if r.y[2]==Zm:
+                   Sig += 1;
+            elif (yold[2]-Zm)*(r.y[2]-Zm)<0.: 
+                   Sig += 1;
+                
+        yi = np.array(yi)
+
+        dR = yi[-1,0]-yi[-2,0];
+        dp = yi[-1,1]-yi[-2,1];
+        dZ = yi[-1,2]-yi[-2,2];
+        dV = yi[-2,3]-yi[-2,3];
+        dr = (Z0-yi[-2,2])/dZ;
+        
+        Re = yi[-2,0]+dR*dr;
+        pe = yi[-2,1]+dp*dr;
+        Ve = yi[-2,3]+dV*dr;
+        t = r.t-dt+dt*dr
+        yi[-1,0] = Re;
+        yi[-1,1] = pe;
+        yi[-1,2] = Z0;
+        yi[-1,3] = Ve;
+
+        return np.array(yi),t,dt, Pphi,mu_m;
+
+    def transit_path_RE(self, E, sigma,Lambda,psiN, Is_Toroidal=False, N_Max = 10000000, NTE=100):
         """
         Particle orbit of runawya electrons
         E is energy in eV unit
         Lambda is v||^2/v^2
         sigma is parallel or antiparallel
         psi is 0 to 1
+        NTE is dt determining option which describes dt as dt = 1/Omega_CE/NTE
 
         """
 
@@ -1593,7 +1925,7 @@ class geqdsk_dk(Geqdsk):
         vpe  = v*np.sqrt(1-Lambda)*gamma;
         mum  = mh*vpe**2/2./B0;
         #dt   = self.data['rmaxis'][0]*2.*np.pi/abs(vpa)/100.;
-        dt   = 1./np.abs(pb.fce_re(B0,E))/100.e0
+        dt   = 1./np.abs(pb.fce_re(B0,E))/float(NTE)
         theN = np.arctan2(Z0-Zm,R0-Rm);
 
         mc2 = pb.mec2*pb.eV2J
@@ -1673,10 +2005,10 @@ class geqdsk_dk(Geqdsk):
         yi[-1,2] = Zm;
         yi[-1,3] = Ve;
 
-        return np.array(yi),t,dt,Omeg#,np.array(dXdts);
+        return np.array(yi),t,dt,Omeg, mum#,np.array(dXdts);
 
     def transit_Lorbit(self, E, mass, charge, sigma,Lambda, psiN, Is_Toroidal=False,RZpos = None,
-            MaxT = None):
+            MaxT = None, Detect_Tracking = False, Guiding_Center_Initial_Position=True):
         """
         Particle path of Lorentz orbit
         E is energy in eV unit
@@ -1691,49 +2023,86 @@ class geqdsk_dk(Geqdsk):
         here dt is 0.01/f where f is cyclotron frequency
         """
 
-        if(RZpos == None): 
-            R0   = self.psiN_RZ(psiN); 
-            Z0   = self.data['zmaxis'][0]; 
-            phi0 = 0.;
-            v    = pb.ev2vi(E,mass);
-            vpa  = v*np.sqrt(Lambda)*sigma;
-            vpe  = np.sqrt(v**2-vpa**2);
-        else:
-            R0 = RZpos[0];
-            phi0 = RZpos[1];
-            Z0 = RZpos[2];
-            vpa = RZpos[3];
-            vpe = RZpos[4];
-            v = np.sqrt(vpa**2 + vpe**2);
-        if (MaxT == None):
-            MaxT = 100000;
-
         Zhe  = charge*pb.eV2J;
         mq   = pb.mp*mass/Zhe;
         qm   = 1./mq;
-        B0   = np.sqrt( self.B2(R0,Z0) );
-        omeg = qm*B0;
+        B0   = np.sqrt( self.B2(self.get('rmaxis'),self.get('zmaxis')) );
 
-        rho  = vpe/omeg
+
+        if Guiding_Center_Initial_Position:
+              if(RZpos == None): 
+                     R0   = self.psiN_RZ(psiN); 
+                     Z0   = self.data['zmaxis'][0]; 
+                     phi0 = 0.;
+                     v    = pb.ev2vi(E,mass);
+                     vpa  = v*np.sqrt(Lambda)*sigma;
+                     vpe  = np.sqrt(v**2-vpa**2);
+              else:
+                     R0 = RZpos[0];
+                     phi0 = RZpos[1];
+                     Z0 = RZpos[2];
+                     vpa = RZpos[3];
+                     vpe = RZpos[4];
+                     v = np.sqrt(vpa**2 + vpe**2);
+                     #calculation for drift frequency
+                     Xyz  = pb.RpZ2xyz(np.array([R0,phi0,Z0]));
+                     Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
+                     omeg = qm*np.sqrt(np.dot(Bxyz,Bxyz));
+                     rho  = vpe/omeg
+                     Xc   = pb.gyration_position(Bxyz,Xyz, vpe, rho, np.pi);
+                     Vc   = pb.gyration_velocity(Bxyz,Xyz, vpe, rho, np.pi);
+                     Ri   = pb.xyz2RpZ(Xc);
+                     Vpe  = pb.Vxyz2RpZ(Xc,Vc);
+
+                     Bvec = self.B_field(R0,Z0,cyclic=True);
+                     Babs = np.sqrt(np.dot(Bvec,Bvec));
+                     bvec = Bvec/Babs;
+                     Vpa  = vpa*bvec
+
+                     Vi   = Vpa+Vpe;
+                     Vi[1] /= R0;
+        else:
+               if(RZpos == None):
+                      print("Please input R, phi, Z, rho position which is observed by FILD detector\n");
+                      return 0;
+               else:
+                      print("Do you put correct particle information at RZpos=(R,phi,Z, rho)?\n");
+                      print("OK!!!\n");
+                      if(len(RZpos) < 4):
+                             print("Hey you. You put wrong RZpos. Its size %d is less than 4"%(len(RZpos)));
+                             return 0;
+                      R0    = RZpos[0];
+                      phi0  = RZpos[1];
+                      Z0    = RZpos[2];
+                      rho   = RZpos[3];
+                      Xyz   = pb.RpZ2xyz(np.array([R0,phi0,Z0]));
+                      Bxyz  = self.Bxyz(Xyz[0],Xyz[1],Xyz[2]);
+                      omeg  = qm*np.sqrt(np.dot(Bxyz,Bxyz));
+                      vpe   = rho * omeg; 
+                      if(pb.ev2vi(E,mass) <= vpe):
+                             print("gyroradius is too large\n");
+                             return 0;
+                      vpa   = np.sqrt(pb.ev2vi(E,mass)**2 - vpe**2);
+                      Xc   = pb.gyration_position(Bxyz,Xyz, vpe, rho, np.pi);
+                      Vc   = pb.gyration_velocity(Bxyz,Xyz, vpe, rho, np.pi);
+                      Ri   = pb.xyz2RpZ(Xc);
+                      Vpe  = pb.Vxyz2RpZ(Xc,Vc);
+       
+                      Bvec = self.B_field(RZpos[0],RZpos[2],cyclic=True);
+                      Babs = np.sqrt(np.dot(Bvec,Bvec));
+                      bvec = Bvec/Babs;
+                      Vpa  = vpa*bvec
+       
+                      Vi   = Vpa+Vpe;
+                      Vi[1] /= R0;
+
+        if (MaxT == None):
+            MaxT = 100000;
 
         dt   = 1./(omeg/np.pi/2.)*0.01;
 
-        #calculation for drift frequency
-        Xyz  = pb.RpZ2xyz(np.array([R0,phi0,Z0]));
-        Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
-        Xc   = pb.gyration_position(Bxyz,Xyz, vpe, rho, np.pi);
-        Vc   = pb.gyration_velocity(Bxyz,Xyz, vpe, rho, np.pi);
-        Ri   = pb.xyz2RpZ(Xc);
-        Vpe  = pb.Vxyz2RpZ(Xc,Vc);
-
-        Bvec = self.B_field(R0,Z0,cyclic=True);
-        Babs = np.sqrt(np.dot(Bvec,Bvec));
-        bvec = Bvec/Babs;
-        Vpa  = vpa*bvec
-
-        Vi   = Vpa+Vpe;
-        Vi[1] /= R0;
-
+        if Detect_Tracking: #Tracking detected particles
+               dt *= -1.;
 
         r    = ode(self.dXdt_Lorbit).set_integrator('vode',method='adams',
                 with_jacobian=False, max_step=1000)
@@ -1741,16 +2110,17 @@ class geqdsk_dk(Geqdsk):
         r.set_f_params([qm]);
 
         Inds = 0;
-        yi   = [[Ri[0],Ri[1],Ri[2],Vi[0],Vi[1],Vi[2]]];
+        yi   = [[Ri[0],Ri[1],Ri[2],Vi[0],Vi[1],Vi[2],0.]];
 
-        while r.t<MaxT*dt:
+        while np.abs(r.t)<np.abs(MaxT*dt) and self.inside_BDs(r.y[0],r.y[2]):
             #time evolution
             r.integrate(r.t+dt);
 
             #calculation for drift frequency
             dXdt = self.dXdt_Lorbit(r.t,r.y,[qm]);
 
-            yi += [r.y[0:6]];
+            yi += [r.y[0:6].tolist()+[r.t]];
+        print(r.t, MaxT*dt);
 
         yi = np.array(yi)
 
@@ -1791,14 +2161,18 @@ class geqdsk_dk(Geqdsk):
         Zhe  = -pb.eV2J;
         mq   = pb.me/Zhe;
         qm   = 1./mq;
-        B0   = np.sqrt( self.B2(R0,Z0) );
+        #B0   = np.sqrt( self.B2(R0,Z0) );
+        B0   = np.sqrt( self.B2(self.get('rmaxis'),self.get('zmaxis')) );
         omeg = qm*B0/gamma;
 
-        rho  = np.abs(vpe / omeg);
+        Brho   = np.sqrt( self.B2(R0,Z0) );
+        omeg_rho = qm*Brho/gamma;
+        rho  = np.abs(vpe / omeg_rho);
         print(rho)
 
-        dt   = 1./np.abs(pb.fce_re(B0, E))*0.01
+        #dt   = 1./np.abs(pb.fce_re(B0, E))*0.01
         #dt   = 1./np.abs(pb.fce(B0))*0.01
+        dt = 1./np.abs(omeg)*0.01
 
         #calculation for drift frequency
         Xyz  = pb.RpZ2xyz(np.array([R0,phi0,Z0]));
@@ -1817,19 +2191,10 @@ class geqdsk_dk(Geqdsk):
 
         Bvec = self.B_field(R0,Z0,cyclic=True);
         Babs = np.sqrt(np.dot(Bvec,Bvec));
-        icylinder = False;
-        if(icylinder):
-            Ri   = pb.xyz2RpZ(Xc);
-            Vpe  = pb.Vxyz2RpZ(Xc,Vc);
-            Vpa  = vpa*Bvec/Babs;
-            Vpe[1]  /= Ri[0];
-            Vpa[1]  /= Ri[0];
-
-        else: 
-            Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
-            Vpa = vpa*Bxyz/np.sqrt(np.dot(Bxyz,Bxyz));
-            Ri  = Xc;
-            Vpe = Vc;
+        Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
+        Vpa = vpa*Bxyz/np.sqrt(np.dot(Bxyz,Bxyz));
+        Ri  = Xc;
+        Vpe = Vc;
 
         Vi  = Vpa-Vpe;   # This is for electron rotation direction
         Ui  = Vi*gamma;
@@ -1859,6 +2224,107 @@ class geqdsk_dk(Geqdsk):
         yi = np.array(yi)
 
         return np.array(yi)
+
+    def transit_Lorbit_RE_normal(self, E, sigma,Lambda, psiN, Is_Toroidal=False,RZpos = None,
+            MaxT = None, Init_option = 1):
+        """
+        Particle path of Lorentz orbit
+        E is energy in eV unit
+        sigma is parallel or antiparallel
+        Lambda is v||^2/v^2
+        psi is 0 to 1
+        MaxT is maximum T of dt unit;
+
+
+        here dt is 0.01/f where f is cyclotron frequency
+        """
+
+        if(RZpos == None): 
+            R0   = self.psiN_RZ(psiN); 
+            Z0   = self.data['zmaxis'][0]; 
+            phi0 = 0.;
+            v    = pb.ev2ve(E);
+            vpa  = v*np.sqrt(Lambda)*sigma;
+            vpe  = np.sqrt(v**2-vpa**2);
+        else:
+            R0 = RZpos[0];
+            phi0 = RZpos[1];
+            Z0 = RZpos[2];
+            vpa = RZpos[3];
+            vpe = RZpos[4];
+            v = np.sqrt(vpa**2 + vpe**2);
+        if (MaxT == None):
+            MaxT = 100000;
+
+        gamma   = pb.ev2gamma(E);
+        Zhe  = -pb.eV2J;
+        mq   = pb.me/Zhe;
+        qm   = 1./mq;
+        B0   = np.sqrt( self.B2(self.get('rmaxis'),self.get('zmaxis')) );
+        omeg = qm*B0/gamma;
+
+        Brho   = np.sqrt( self.B2(R0,Z0) );
+        omeg_rho = qm*Brho/gamma;
+        rho  = np.abs(vpe / omeg_rho);
+        print(rho)
+
+        dt   = -1.e-2
+        #dt   = 1./np.abs(pb.fce(B0))*0.01
+
+        #calculation for drift frequency
+        Xyz  = pb.RpZ2xyz(np.array([R0,phi0,Z0]));
+        Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
+        G_phase = np.pi/2.
+        if(Init_option == 1): 
+            Xc   = pb.gyration_position(Bxyz,Xyz, vpe, rho, G_phase);
+            Vc   = pb.gyration_velocity(Bxyz,Xyz, vpe, rho, G_phase);
+            Xpe  = Xc - Xyz; 
+        elif(Init_option==2):
+            Axyz = np.array([1.,0.,1.]);
+            Xc  = np.cross(Bxyz,Axyz);
+            Xpe = Xc / np.sqrt(np.dot(Xc,Xc))*rho;
+            Xc  = Xyz + Xpe;
+            Vc   = np.cross(Xpe,Bxyz)/rho/np.sqrt(np.dot(Bxyz,Bxyz))*vpe
+
+        Bvec = self.B_field(R0,Z0,cyclic=True);
+        Babs = np.sqrt(np.dot(Bvec,Bvec));
+
+        Bxyz = self.Bxyz(Xyz[0],Xyz[1],Xyz[2])
+        Vpa = vpa*Bxyz/np.sqrt(np.dot(Bxyz,Bxyz));
+        Ri  = Xc;
+        Vpe = Vc;
+
+        Vi  = Vpa-Vpe;   # This is for electron rotation direction
+        Ui  = Vi*gamma/pb.cv;
+        COg = pb.cv/omeg/gamma;
+        Xi  = Ri/COg;
+
+
+        #Ui  = Vpa*gamma
+        #Xi  = Xyz
+
+        r    = ode(self.dXdt_Lorbit_RE_normal).set_integrator('vode',method='adams',
+                with_jacobian=False, max_step=1000)
+        r.set_initial_value([Xi[0],Xi[1],Xi[2],Ui[0],Ui[1],Ui[2]],0.)
+        r.set_f_params([COg,B0]);
+
+        Inds = 0;
+        yi   = [pb.xyz2RpZ(Xi*COg)[0:3]];
+        #yi   = [Xyz[0:3]];
+
+        while r.t>MaxT*dt:
+            #time evolution
+            r.integrate(r.t+dt);
+
+            #calculation for drift frequency
+            dXdt = self.dXdt_Lorbit_RE_normal(r.t,r.y,[COg,B0]);
+
+            yi += [pb.xyz2RpZ(r.y[0:3]*COg)[0:3]];
+
+
+        return np.array(yi)
+
+
 
     def Init_for_transit_path(self, E, mass, charge, sigma,Lambda, psiN ):
         """
@@ -1892,29 +2358,39 @@ class geqdsk_dk(Geqdsk):
        rbbbs = self.data['rbbbs'][0]
        izblr = np.zeros(2,dtype='int');
        for i in range(nbbbs-1): 
-       	if((zmaxis - zbbbs[i])*(zmaxis- zbbbs[i+1])<=0.):
-       		izblr[ix1] = i;
-       		ix1+=1;
+              if(zmaxis - zbbbs[i] == 0):
+                     izblr[ix1] = i;
+                     ix1+=1;
+              elif((zmaxis - zbbbs[i])*(zmaxis- zbbbs[i+1])<0.): 
+                     print(" zbbbs[%d]-zmaxis =%f %f\n"%(i,zmaxis-zbbbs[i],zmaxis-zbbbs[i+1]));
+                     izblr[ix1] = i; 
+                     ix1+=1; 
        ####### get rbxl and rblr #######
        #double R2, R1, Z2, Z1, Rb1, Rb2, Zx;
        print("ix1 is %d"%ix1);
        if(ix1==2):
-       	Zx  = zmaxis;
-       	ix2 = izblr[0];
-       	ix3 = izblr[1];
-       	R2 = rbbbs[ix2+1]; R1 = rbbbs[ix2];
-       	Z2 = zbbbs[ix2+1]; Z1 = zbbbs[ix2];
-       	Rb1 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
-       	R2 = rbbbs[ix3+1]; R1 = rbbbs[ix3];
-       	Z2 = zbbbs[ix3+1]; Z1 = zbbbs[ix3];
-       	Rb2 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
-       	print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
-       	if(Rb1 >= Rb2):
-       		self.rbxl = Rb2;
-       		self.rbxr = Rb1;
-       	else:
-       		self.rbxl = Rb1;
-       		self.rbxr = Rb2;
+              Zx  = zmaxis;
+              ix2 = izblr[0];
+              ix3 = izblr[1];
+              R2 = rbbbs[ix2+1]; R1 = rbbbs[ix2];
+              Z2 = zbbbs[ix2+1]; Z1 = zbbbs[ix2];
+              if not R2 == R1:
+                     Rb1 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
+              else:
+                     Rb1 = R1;
+              R2 = rbbbs[ix3+1]; R1 = rbbbs[ix3];
+              Z2 = zbbbs[ix3+1]; Z1 = zbbbs[ix3];
+              if not R2==R1: 
+                     Rb2 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
+              else:
+                     Rb2 = R1;
+              print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
+              if(Rb1 >= Rb2):
+              	self.rbxl = Rb2;
+              	self.rbxr = Rb1;
+              else:
+              	self.rbxl = Rb1;
+              	self.rbxr = Rb2;
        else:
        	print("plasma boundary has problems\n");
        	self.rbxl = rbbbs.min(); 
@@ -1945,56 +2421,286 @@ class geqdsk_dk(Geqdsk):
        	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
        psi_Rs[0] 	= 0.; 
        self.f_RZ_Nr   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
+
+    def Plasma_volume_simple(self): 
+       """
+       Plasma volume approximation
+       return: Approximated plasma volume enclosed by psi=0.99
+       """
+       yi,len  =   self.Closed_Thetas(0.99,ndphi=5000);
+       return self.PolyArea(yi[:,0],yi[:,1])*np.pi*2.*self.get('Rmaxis')
+
+    def Plasma_volume_delicate(self):
+       """
+       Plasma volume more close to real value)
+       """
+       npsi = 100;
+       psi = np.linspace(0.,0.99,npsi);
+
+       npsi -= 1;
+       psi = np.linspace(psi[1],0.99,npsi);
+       Vol = 0.;
+       yi1,len = self.Closed_Thetas(psi[0])
+       Vol  = self.PolyArea(yi1[:,0],yi[:,1])*np.pi*2.*self.get('Rmaxis');
+       for i in range(1,npsi-1):
+           yi1,len = self.Closed_Thetas(psi[i]);
+           yi2,len = self.Closed_Thetas(psi[i+1]);
+           nphi = yi1.shape[0];
+           for j in range(nphi-1):
+               x = [yi1[j,0], yi1[j+1,0],yi2[j+1,0],yi2[j,0]];
+               y = [yi1[j,1], yi1[j+1,1],yi2[j+1,1],yi2[j,1]];
+               ra   = np.sum(x)/4.;
+               Vol += self.PolyArea(x,y)*np.pi*2.*ra
+
+       return Vol;
+
+    def PolyArea(self,x,y): 
+       """
+       Area of Polygon 
+       input: x - x points
+              y - y points
+       return: area
+       """
+       return 0.5*np.abs(np.dot(x,np.roll(y,-1))-np.dot(y,np.roll(x,-1))) 
+
+    def Flux_surface_theta(self,R,Z,ndphi = 50000):
+       """
+       This function calculcate theta which satisfy dphi/dtheta = q
+       input: R  R value
+              Z  Z value
+       return: new q value and theta (in radian)
+       """
+       if not self.inside_LCFS(R,Z):
+              print("not inside LCFS\n");
+              return 0.,0.;
+       Rax = self.data['rmaxis'][0];
+       Zax = self.data['zmaxis'][0];
+       
+       ### check in LCFS ###
+       psin = self.f_normal(R,Z);
+       ndphi = ndphi;
+       qv = self.dphi_dtheta(psin,ndphi=ndphi);
+       qvold = self.q_inter(psin);
+
+       r = ode(self.dr).set_integrator('vode',method='adams',with_jacobian=False, 
+                     max_step = 100000);
+       r.set_initial_value([R,Z],0.);
+       yi = np.array([r.y[0],r.y[1],r.t]);
+       dphi = np.pi*2/(ndphi-1)*qvold;
+       r.integrate(r.t+dphi)
+       yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t])));
+       while(yi[-1,0] < Rax or (yi[-1,1]-Zax)*(yi[-2,1]-Zax)>0.):
+              r.integrate(r.t+dphi);
+              yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t])));
+       Z2 = yi[-1,1]; Z1=yi[-2,1];   DZ   = Z2 - Z1; 
+       phi2=yi[-1,2]; phi1=yi[-2,2]; DPHI = phi2 - phi1;
+       R2=  yi[-1,0]; R1=yi[-2,0]; DR = R2 - R1;
+       phi_ax = DPHI/DZ*Zax + (phi1-DPHI/DZ*Z1);
+       R_ax = DR/DZ*Zax + (R1-DR/DZ*Z1);
+       if self.IsReverse:
+              return qv, phi_ax/qv; #*180./np.pi
+       else:
+              return qv,-phi_ax/qv+np.pi*2.;
+
+    def inside_LCFS(self,R,Z):
+       """
+       This function test inside LCFS
+       input: R R value
+              Z Z value
+       return: True of false
+       """
+       NR = self.data['rbbbs'][0].shape[0];
+       theta = 0.;
+       for i in range(NR-1):
+              r1, r2 = self.data['rbbbs'][0][i:i+2]
+              z1, z2 = self.data['zbbbs'][0][i:i+2]
+              x1 = [r1-R, z1-Z]; x2 = [r2-R, z2-Z];
+              theta += np.arctan2(np.cross(x1,x2).item(),np.dot(x1,x2))
+       if(theta > np.pi):
+              return True;
+       else:
+              return False
+
+    def pol2tor(self, rho_pol):
+       """
+       This function returns normalized toroidal flux at a give normalized poloidal flux
+       input: normalized poloidal flux
+       return: normalized toroidal flux
+       """
+       if(0.<=rho_pol<=1.):
+              if not self.pol2tor_exist:
+                     nw   = self.get('nw');
+                     psis = np.linspace(0.,self.get('psiw'),nw);
+                     self.psit = np.zeros(nw,dtype='float');
+                     self.psit[0] = 0.;
+
+                     def q_psip(psi_p):
+                            return self.q_inter(psi_p/self.get('psiw'));
+                     r = ode(q_psip).set_integrator('vode',method='adams',with_jacobian=False,max_step=100000);
+                     r.set_initial_value(0.,0.);
+                     for i in range(1,nw):
+                            r.integrate(psis[i]);
+                            if(r.t != psis[i]):
+                                   printf("Error at %f"%(psis[i]));
+                            self.psit[i]=r.y;
+                     self.psit_normal = self.psit/(self.psit[-1]-self.psit[0]);
+                     self.psit_inter=interpolate.splrep(self.data['psi_normal'][0],self.psit_normal,k=3)
+                     self.psip_inter=interpolate.splrep(self.psit_normal,self.data['psi_normal'][0],k=3)
+                     self.pol2tor_exist = True;
+                     return interpolate.splev(rho_pol,self.psit_inter);
+              else:
+                     return interpolate.splev(rho_pol,self.psit_inter);
+       else:
+              print("Put range 0 to 1\n");
+
+    def tor2pol(self, rho_tor):
+       """
+       This function returns normalized poloidal flux at a give normalized toroidal flux
+       input: normalized toroidal flux
+       return: normalized poloidal flux
+       """
+       if(0.<=rho_tor<=1.):
+              if not self.pol2tor_exist:
+                     return interpolate.splev(rho_tor,self.psip_inter);
+              else:
+                     return interpolate.splev(rho_tor,self.psip_inter);
+       else:
+              print("Put range 0 to 1\n");
+
+
+    def Flux_surface_dthetadR(self,R,Z,ndphi = 500):
+       """
+       This function calculcate theta which satisfy dphi/dtheta = q
+       input: R  R value
+              Z  Z value
+       return: dtheta/dR (in radian)
+       """
+       if not self.inside_LCFS(R,Z):
+              print("not inside LCFS\n");
+              return np.nan;
+       dR = 1.e-2;
+       Rp = R+dR;
+       Rm = R-dR;
+       inRp = self.inside_LCFS(Rp,Z);
+       inRm = self.inside_LCFS(Rm,Z);
+       if self.IsReverse:
+              sv =  1.;
+       else:
+              sv = -1.;
+       if( inRp and inRm):
+              qv, thetap = self.Flux_surface_theta(Rp,Z,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(Rm,Z,ndphi=ndphi);
+              return 0.5*(thetap-thetam)/dR; #*180./np.pi
+       elif( inRp and not inRm):
+              qv, thetap = self.Flux_surface_theta(Rp,Z,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(R,Z,ndphi=ndphi);
+              return (thetap-thetam)/dR; #*180./np.pi
+       elif( not inRp and inRm):
+              qv, thetap = self.Flux_surface_theta(R,Z,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(Rm,Z,ndphi=ndphi);
+              return (thetap-thetam)/dR; #*180./np.pi
+       else:
+              return 0.;
+
+    def Flux_surface_dthetadZ(self,R,Z,ndphi = 500):
+       """
+       This function calculcate dtheta/dZ which satisfy dphi/dtheta = q
+       input: R  R value
+              Z  Z value
+       return: dtheta/dZ (in radian)
+       """
+       if not self.inside_LCFS(R,Z):
+              print("not inside LCFS\n");
+              return np.nan;
+       dZ = 1.e-2;
+       Zp = Z+dZ;
+       Zm = Z-dZ;
+       inZp = self.inside_LCFS(R,Zp);
+       inZm = self.inside_LCFS(R,Zm);
+       if self.IsReverse:
+              sv =  1.;
+       else:
+              sv = -1.;
+       if( inZp and inZm):
+              qv, thetap = self.Flux_surface_theta(R,Zp,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(R,Zm,ndphi=ndphi);
+              if np.abs(thetap-thetam) < np.pi:
+                     return 0.5*(thetap-thetam)/dZ; #*180./np.pi
+              else:
+                     return 0.5*(thetap-thetam+np.pi*2.*sv)/dZ; #*180./np.pi
+
+       elif( inZp and not inZm):
+              qv, thetap = self.Flux_surface_theta(R,Zp,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(R,Z,ndphi=ndphi);
+              if np.abs(thetap-thetam) < np.pi:
+                     return (thetap-thetam)/dZ; #*180./np.pi
+              else:
+                     return (thetap-thetam+np.pi*2.*sv)/dZ; #*180./np.pi
+       elif( not inZp and inZm):
+              qv, thetap = self.Flux_surface_theta(R,Z,ndphi=ndphi);
+              qv, thetam = self.Flux_surface_theta(R,Zm,ndphi=ndphi);
+              if np.abs(thetap-thetam) < np.pi: 
+                     return (thetap-thetam)/dZ; #*180./np.pi
+              else:
+                     return (thetap-thetam+np.pi*2.*sv)/dZ; #*180./np.pi
+       else:
+              return 0.;
+
+
+       
 ### End of class
 	 
 if __name__ == '__main__':
     #from pylab import *
-    polyg_test = True
-    psi_test = True
+    polyg_test = False
+    psi_test = False
     q_test = True
-    seo_test = True
+    seo_test = False
+    B_test   = False
     fpath = "/home/trhee/equilibrium/21523/"
-    filename = fpath + "g021523.005000"
+    fpath = "/home/trhee/code/ORBIT/"
+    filename = fpath + "g021595.007400_laszlo"
 
     g1 = geqdsk_dk(filename = filename,gR0B0=False)
     g1.init_operators()
 #    g1.get_B_abs()
-    nnew = 100
-    Rnew = np.linspace(1.4,2.3,100)
-    Znew = 0.5
-    Bs   = np.zeros(nnew,dtype='float')
-    Bvec   = np.zeros([3,nnew],dtype='float')
-    b   = np.zeros([3,nnew],dtype='float')
-    b2  = np.zeros(nnew,dtype='float')
-    b_dot_curl_b   = np.zeros(nnew,dtype='float')
-    Curl_b = np.zeros([3,nnew],dtype='float')
-    Grad_B = np.zeros([3,nnew],dtype='float')
-    for i in range(nnew):
-        data1   =g1.EquiB_package_for_dk(Rnew[i],Znew)
-        Curl_b[:,i] = data1['curl_b']
-        Grad_B[:,i] = data1['Grad_B']
+    if B_test:
+        nnew = 100
+        Rnew = np.linspace(1.4,2.3,100)
+        Znew = 0.5
+        Bs   = np.zeros(nnew,dtype='float')
+        Bvec   = np.zeros([3,nnew],dtype='float')
+        b   = np.zeros([3,nnew],dtype='float')
+        b2  = np.zeros(nnew,dtype='float')
+        b_dot_curl_b   = np.zeros(nnew,dtype='float')
+        Curl_b = np.zeros([3,nnew],dtype='float')
+        Grad_B = np.zeros([3,nnew],dtype='float')
+        for i in range(nnew):
+            data1   =g1.EquiB_package_for_dk(Rnew[i],Znew)
+            Curl_b[:,i] = data1['curl_b']
+            Grad_B[:,i] = data1['Grad_B']
 
-    plt.figure(4)
-    plt.plot(Rnew,Curl_b[0,:],'rx-')
-    plt.plot(Rnew,Curl_b[1,:],'bx-')
-    plt.plot(Rnew,Curl_b[2,:],'kx-')
-    plt.legend()
-    plt.xlabel('R')
-    plt.title('curl_b')
-
-
-    plt.figure(7)
-    plt.plot(Rnew,Grad_B[0,:],'rx')
-    plt.plot(Rnew,Grad_B[2,:],'bx')
-    plt.legend()
-    plt.xlabel('R')
+        plt.figure(4)
+        plt.plot(Rnew,Curl_b[0,:],'rx-')
+        plt.plot(Rnew,Curl_b[1,:],'bx-')
+        plt.plot(Rnew,Curl_b[2,:],'kx-')
+        plt.legend()
+        plt.xlabel('R')
+        plt.title('curl_b')
 
 
-    psi_n = 0.8
-    g1 = geqdsk_dk(filename = filename,gR0B0=False)
-    g1.init_data_o(g1.BtBphi);  #initialize the surface data
+        plt.figure(7)
+        plt.plot(Rnew,Grad_B[0,:],'rx')
+        plt.plot(Rnew,Grad_B[2,:],'bx')
+        plt.legend()
+        plt.xlabel('R')
 
-    ndphi = 50
+
+        psi_n = 0.8
+        g1 = geqdsk_dk(filename = filename,gR0B0=False)
+        g1.init_data_o(g1.BtBphi);  #initialize the surface data
+
+        ndphi = 50
 
 
     if psi_test:
@@ -2019,12 +2725,12 @@ if __name__ == '__main__':
         plt.show();
     #q surface test
     if q_test:
-        ndphi = 100
+        ndphi = 360
         g1.init_data_o(g1.BtBphi);  #initialize the surface data
-        for psi_n in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
+        for psi_n in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9, 0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99]:
             averv = g1.surf_aver_q(psi_n,ndphi = ndphi)
             val = g1.q_inter(psi_n);
-            print("Psi %f Calculated %f equilibrium  %f error %f"%(psi_n, averv, val, val/averv-1.));
+            print("Psi %f Calculated %f equilibrium  %f error(percent) %f"%(psi_n, averv, val, (val/averv-1.)*100.));
     if seo_test:
         for qv in [4, 4.5, 5, 5.5, 6]:
             psiv = g1.q_root_inter(qv)
@@ -2046,6 +2752,17 @@ if __name__ == '__main__':
 
         plt.show()
 
+    for psiv in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
+       yi,len=  g1.Closed_Thetas(psiv,ndphi = 128)
+       plt.plot(yi[:,0],yi[:,1],'ro-');
+       plt.plot(yi[-1,0],yi[-1,1],'bx',markersize=10)
+       plt.plot(yi[0,0],yi[0,1],'gd',markersize=10)
+       #ymin = yi[0,1]*1.5
+       #ymax = yi[0,1] - yi[0,1]*1.2
+       #xmin = yi[0,0]*0.98
+       #xmax = yi[0,0]*1.01
+       #plt.ylim([ymin,ymax])
+       #plt.xlim([xmin,xmax])
     plt.show()
 
 

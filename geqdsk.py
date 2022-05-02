@@ -23,7 +23,7 @@ by Tongnyeol Rhee
 """
 
 class Geqdsk:
-      def __init__(self, filename = None, gR0B0 = False, BDS = True):
+      def __init__(self, filename = None, gR0B0 = False, BDS = True, IsReverse=False):
         """
         Constructor
         """
@@ -34,14 +34,14 @@ class Geqdsk:
                 self.data = {}
         else:
                 self.data = {}
-                self.openFile(filename,gR0B0 = gR0B0,BDS=BDS)
+                self.openFile(filename,gR0B0 = gR0B0,BDS=BDS, IsReverse=IsReverse)
                 self.get_psi();
                 self.get_psi_normal();
 
       def __del__(self):
         pass
 
-      def openFile(self, filename,gR0B0=False,BDS=True):
+      def openFile(self, filename,gR0B0=False,BDS=True,IsReverse=False):
         """
         open geqdsk file and parse its content
         keyword: gR0B0 - set g value as Rcentr*Bcentr
@@ -72,6 +72,14 @@ class Geqdsk:
         self.data['zmaxis'] = float(m.group(2)), "Z of magnetic axis in meter"
         self.data['simag'] = float(m.group(3)), "poloidal flux at magnetic axis in Weber /rad"
         self.data['sibry'] = float(m.group(4)), "poloidal flux at the plasma boundary in Weber /rad"
+        if IsReverse: 
+               tup_e = list(self.data['simag'])
+               tup_e[0]*=-1.
+               self.data['simag']=tuple(tup_e);
+               tup_e = list(self.data['sibry'])
+               tup_e[0]*=-1.
+               self.data['sibry']=tuple(tup_e);
+
         self.data['psiw'] = self.data['sibry'][0]-self.data['simag'][0], "psi width"
         self.data['bcentr'] = numpy.abs(float(m.group(5))), "Vacuum toroidal magnetic field in Tesla at RCENTR"
 
@@ -105,7 +113,10 @@ class Geqdsk:
 
         self.data['pprime'] = numpy.array(data[3*nw:4*nw]), "P'(psi) in (nt/m2)/(Weber/rad) on uniform flux grid"
 
-        self.data['psirz'] = numpy.reshape( data[4*nw:4*nw+nw*nh], (nh, nw) ), "Poloidal flux in Weber / rad on the rectangular grid points"
+        if not IsReverse: 
+               self.data['psirz'] = numpy.reshape( data[4*nw:4*nw+nw*nh], (nh, nw) ), "Poloidal flux in Weber / rad on the rectangular grid points"
+        else: 
+               self.data['psirz'] = -1.*numpy.reshape( data[4*nw:4*nw+nw*nh], (nh, nw) ), "Poloidal flux in Weber / rad on the rectangular grid points"
         self.data['qpsi']  = numpy.array(data[4*nw+nw*nh:5*nw+nw*nh]), "q values on uniform flux grid from axis to boundary"
         
         if BDS:
@@ -176,6 +187,7 @@ class Geqdsk:
         if lq == len(q_deriv): 
             self.data['q_root_inter']=interpolate.splrep(self.data['qpsi'][0],self.data['psi_normal'][0],k=5)
         self.data['g_inter']=interpolate.splrep(self.data['psi_normal'][0],self.data['fpol'][0],k=5)
+        self.BDs = numpy.array([ xmin+1.e-8, xmin+rdim-1.e-8,zmin+1.e-8,zmax-1.e-8]);
 
 
       def getAll(self):   #return all data

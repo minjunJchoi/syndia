@@ -26,6 +26,10 @@ Tongnyeol Rhee
 Converted to Python3 
 by Tongnyeol Rhee
 05 Dec. 2019
+
+Commit test 3
+by Tongnyeol Rhee
+16 Mar. 2022
 """
 import numpy as np
 me = 9.10938215e-31     # electron rest mass
@@ -74,6 +78,18 @@ def ev2vi_nrl(eV,mu):
         speed of m/s unit
     """
     return 9.79e3/np.sqrt(mu)*np.sqrt(2.*eV)
+
+def ev2vi_fast(eV,mu):
+    """
+    electron volt to ion velocity in m/s unit
+    by using NRL formulae
+    input:
+        eV, mu (ion mass ratio to proton)
+    output:
+        speed of m/s unit
+    """
+    return 1.3841122485902230e+04/np.sqrt(mu)*np.sqrt(eV)
+
 
 def ev2vi(eV,mu):
     """
