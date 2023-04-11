@@ -35,8 +35,10 @@ class KstarEceiInfo(object):
             self.data_path = '/eceidata2/exp_2019/'
         elif 24100 < shot and shot < 27400:
             self.data_path = '/eceidata2/exp_2020/'
-        elif 27400 < shot:
+        elif 27400 < shot and shot < 30540:
             self.data_path = '/eceidata2/exp_2021/'
+        elif 30540 < shot:
+            self.data_path = '/eceidata2/exp_2022/'
 
         self.clist = expand_clist(clist)
         cnum = len(self.clist)
