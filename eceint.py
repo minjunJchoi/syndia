@@ -144,7 +144,7 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     #zm = np.mean(zp[midx])
     #thm = np.mean(th[midx])
     
-    #plt.plot(Rm, jms[midx], 'x')
+    #plt.axvline(x=Rm, color='r')
 
     # mean emissivity position
     njms = jms/np.sum(jms) 
@@ -152,7 +152,7 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     zm = np.sum(zp * njms)
     thm = np.sum(th * njms)
 
-    #plt.plot(Rm, jms[midx], 'o')
+    #plt.axvline(x=Rm, color='k')
 
     #plt.show()
 
