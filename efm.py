@@ -30,9 +30,9 @@ class EceFwdMod(object):
     def __init__(self):
         self.Dlist = []
 
-    def set_profile(self, geqdsk_fn, Te_fn, ne_fn):
+    def set_profile(self, geqdsk_fn, Te_fn, ne_fn, bfactor=1.0):
         self.geqdsk_fn = geqdsk_fn
-        self.pf = ProfFunc(geqdsk_fn, Te_fn, ne_fn)
+        self.pf = ProfFunc(geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)
 
     def set_channel(self, shot, clist):
         self.shot = shot

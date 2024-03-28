@@ -26,7 +26,10 @@ import matplotlib.pyplot as plt
 # z2d[:,0] # -> row vector; if you want a column vector, z2d[:,[0]]
 
 class ProfFunc(object):
-    def __init__(self, geqdsk_fn, Te_fn, ne_fn):
+    def __init__(self, geqdsk_fn, Te_fn, ne_fn, bfactor=1.0):
+        ## B = B*bfactor; considering B-field uncertainty 
+        self.bfactor = bfactor
+
         ## read files
         # geqdsk file
         self.geq = geqdsk_dk(filename=geqdsk_fn)
@@ -58,7 +61,7 @@ class ProfFunc(object):
             ####### add B field strenth 2D perturbation here #######
             # B = B + delta_B(R, z)
             ####### add B field strenth 2D perturbation here #######
-        return B
+        return B*self.bfactor
 
     # Bvec = [Br, Bz, Bt] [T]
     def F_Bvec(self, R, z):
