@@ -51,17 +51,17 @@ class ProfFunc(object):
             it = np.nditer(R, flags=['multi_index'], op_flags=['readonly'])
             while not it.finished:
                 idx = it.multi_index
-                B[idx] = self.geq.B_abs(R[idx], z[idx])
+                B[idx] = self.geq.B_abs(R[idx], z[idx])*self.bfactor
                 ####### add B field strenth 2D perturbation here #######
                 # B = B + delta_B(R, z)
                 ####### add B field strenth 2D perturbation here #######
                 it.iternext()
         else:
-            B = float(self.geq.B_abs(R, z))
+            B = float(self.geq.B_abs(R, z))*self.bfactor
             ####### add B field strenth 2D perturbation here #######
             # B = B + delta_B(R, z)
             ####### add B field strenth 2D perturbation here #######
-        return B*self.bfactor
+        return B
 
     # Bvec = [Br, Bz, Bt] [T]
     def F_Bvec(self, R, z):
