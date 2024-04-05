@@ -47,7 +47,7 @@ class EceFwdMod(object):
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
             self.diag = KstarEceInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0, select='mean'):
         ## bpath interp TORBEAM or Ray tracing
         ## pintp
         ## eceint
@@ -78,6 +78,7 @@ class EceFwdMod(object):
         # it is same with real abs_temp for black body;
         # you determine correctness of temperature/density profile (from Thomson, etc) (variable inputs of syndia) by comparing this output with what 'well calibrated' ECE gives you
         abs_temp = np.zeros(cnum) # abs_temp from F_Te (input of syndia)
+        tau = np.zeros(cnum) # optical depth
 
         Rch = np.zeros(cnum)  # R [m] of each channel
         zch = np.zeros(cnum)  # z [m] of each channel
@@ -118,24 +119,26 @@ class EceFwdMod(object):
                     s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, self.pf, 0)
 
                     # calculate ECE intensity along path
-                    ece_int, Rm, zm, thm, s, jms, ams, tau = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.diag.hn, F_Bs, F_Tes, F_nes) # [m,m,m,rad,rad/s,hn,funcs]
+                    ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.diag.hn, F_Bs, F_Tes, F_nes, select=select) # [m,m,m,rad,rad/s,hn,funcs]
 
-                    print('tau = {:g}'.format(integrate.trapz(ams,x=s)))
-                    print('ece_int Iece = {:g}'.format(ece_int))
-                    print('Rm = {:g}'.format(Rm))
-                    print('zm = {:g}'.format(zm))
-                    print('thm = {:g}'.format(thm))
+                    print('{:d}-ray tau = {:g}'.format(j, integrate.trapz(ams,x=s)))
+                    print('{:d}-ray ece_int Iece = {:g}'.format(j, ece_int))
+                    print('{:d}-ray Rm = {:g}'.format(j, Rm))
+                    print('{:d}-ray zm = {:g}'.format(j, zm))
+                    print('{:d}-ray thm = {:g}'.format(j, thm))
 
                     # channel response in optics and IF
                     dS = np.exp(-2*(dz[i]/self.Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/self.Bcf )**4)
                     S = S + dS
 
                     int_meas[cn] = int_meas[cn] + ece_int * dS
+                    tau[cn] = tau[cn] + integrate.trapz(ams,x=s) * dS                    
                     Rch[cn] = Rch[cn] + Rm * dS
                     zch[cn] = zch[cn] + zm * dS
 
             # average over response
             int_meas[cn] = int_meas[cn] / S
+            tau[cn] = tau[cn] / S            
             Rch[cn] = Rch[cn] / S
             zch[cn] = zch[cn] / S
 
@@ -143,15 +146,16 @@ class EceFwdMod(object):
             rad_temp[cn] = int_meas[cn] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
             abs_temp[cn] = self.pf.F_Te(Rch[cn], zch[cn]) / (1000.0*e) # [keV]
 
-            print('S = {:g}'.format(S))
+            # print('S = {:g}'.format(S))
             print('Rch = {:g}'.format(Rch[cn]))
             print('zch = {:g}'.format(zch[cn]))
             print('imeas = {:g}'.format(int_meas[cn]))
             print('rad_temp = {:g}'.format(rad_temp[cn]))
             print('abs_temp = {:g}'.format(abs_temp[cn]))
+            print('tau = {:g}'.format(tau[cn]))
             #print('abs_dens = {:g}'.format(self.pf.F_ne(Rch[cn], zch[cn])/1e19))
 
-        return Rch, zch, int_meas, rad_temp, abs_temp
+        return Rch, zch, int_meas, tau, rad_temp, abs_temp
 
 #plt.plot(s,ams)
 #plt.show()

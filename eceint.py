@@ -10,17 +10,8 @@ import math
 import cmath
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
-from scipy import interpolate
 
-#from pfunc import *
-
-from time import strftime
-
-#[Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, th, Rc, omega, m, F_B, F_Te, F_ne)
-# M.J. Choi (mjchoi@nfri.re.kr)
-# CC BY-NC-SA
-
-# all mks units except Te
+# all mks units except Temperature in [J]
 # s : beam path [m] from hfs to lfs
 # Rp : R coordinates on beam path [m]
 # zp : z coordinate on beam path [m]
@@ -31,13 +22,12 @@ from time import strftime
 # F_Te : 2d TriScatteredInterp Te function in R-z coordinates [J]
 # F_ne : 2d TriScatteredInterp ne function in R-z coordinates [m^-3]
 # @(x,y) : (s) coordinate
+# select : 'mean' or 'max'
 
 # it will calculate emission profile of frequency omega along s
 # Rm : maximum emission position [m]
 # zm : maximum emission position [m]
-# Iece : ece intensity [W/m^2 Hz]
-## all mks units, Temperature in [J]
-
+# ece_int : ece intensity [W/m^2 Hz]
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -45,16 +35,7 @@ eps = 8.854*1e-12
 c = 299792458
 mc2 = me*c**2
 
-#[Rm, zm, s, tau, jms, theta_max, Iece] = ece_intensity(Rp, zp, th, Rc, omega, m, F_B, F_Te, F_ne)
-
-# for verification with matlab code
-#F_B = lambda s: 3.16804
-#F_Te = lambda s: 1.81824e-16
-#F_ne = lambda s: 2.08039e+19
-
-def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], [rad/s], harmonic number
-    m = float(m)
-
+def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne, select='mean'): # [m], [m], [rad], [rad/s], harmonic number
     # characteristic frequencies
     wce = lambda s: e*F_B(s)/me # [rad/s]
     wpe = lambda s: np.sqrt(F_ne(s)*e**2/(eps*me)) # [rad/s]
@@ -125,42 +106,40 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne): # [m], [m], [rad], 
     #     s[i] = s[i-1] + ds[i]
 
     # calculate differential optical depth dtau
-    tau = integrate.trapz(ams,x=s) - np.append(0,integrate.cumtrapz(ams,x=s)) # from zero; a single point matters
+    dtau = integrate.trapz(ams,x=s) - np.append(0,integrate.cumtrapz(ams,x=s)) # from zero; a single point matters
 
     # emissitivty after reabsorption
     jms = np.zeros(s.size)
     for i in range(s.size):
-        jms[i] = ams[i]*Ibb(s[i],omega)*np.exp(-tau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
+        jms[i] = ams[i]*Ibb(s[i],omega)*np.exp(-dtau[i]) # emissivity after reabsorption. B(2.2.13), B(2.2.15)
+   
+    # max or mean emissivity position
+    if select == 'max': 
+        # maximum emissivity position
+        midx = np.where(jms == jms.max())
+        Rm = np.mean(Rp[midx]) # for multiple maximum cases
+        zm = np.mean(zp[midx])
+        thm = np.mean(th[midx])
+    elif select == 'mean':
+        # mean emissivity position
+        njms = jms/np.sum(jms) 
+        Rm = np.sum(Rp * njms)
+        zm = np.sum(zp * njms)
+        thm = np.sum(th * njms)
 
-    #plt.plot(s,ams)
-    #plt.plot(Rp,jms)
-    #plt.plot(Rp,jms/jms.max())
-    #plt.plot(Rp,F_Te(s)/(1000.0*e))
-    #plt.plot(Rp,F_ne(s)/(1e19))
-    
-    # maximum emissivity position
-    #midx = np.where(jms == jms.max())
-    #Rm = np.mean(Rp[midx]) # for multiple maximum cases
-    #zm = np.mean(zp[midx])
-    #thm = np.mean(th[midx])
-    
-    #plt.axvline(x=Rm, color='r')
-
-    # mean emissivity position
-    njms = jms/np.sum(jms) 
-    Rm = np.sum(Rp * njms)
-    zm = np.sum(zp * njms)
-    thm = np.sum(th * njms)
-
-    #plt.axvline(x=Rm, color='k')
-
-    #plt.show()
+    # plt.plot(s,ams)
+    # plt.plot(Rp,jms)
+    # plt.plot(Rp,jms/jms.max())
+    # plt.plot(Rp,F_Te(s)/(1000.0*e))
+    # plt.plot(Rp,F_ne(s)/(1e19))
+    # plt.axvline(x=Rm, color='k')
+    # plt.show()
 
     # total intensity measured at outisde
     # ece_int = integrate.simps(jms,x=s)
     ece_int = np.sum(jms*ds)
 
-    return ece_int, Rm, zm, thm, s, jms, ams, tau
+    return ece_int, Rm, zm, thm, s, jms, ams
 
 
 #ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(np.array([1.7]), np.array([-0.3]), np.array([0.1]), 87.6*1e9*2*np.pi, float(2)) # [m], [m], [rad], [rad/s], harmonic number
