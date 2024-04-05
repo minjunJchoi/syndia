@@ -64,7 +64,9 @@ class KstarEceiInfo(object):
             self.toff = self.tt[0]+0.001
             self.fs = dset.attrs['SampleRate'][0]*1000.0  # in [Hz]
             self.bt = dset.attrs['TFcurrent']*0.0995556  # [kA] -> [T]
-            self.mode = dset.attrs['Mode'].strip().decode()
+            self.mode = dset.attrs['Mode'].strip()
+            if isinstance(self.mode, bytes):
+                self.mode = self.mode.decode()
             if self.mode == 'O':
                 self.hn = 1  # harmonic number
             elif self.mode == 'X':
