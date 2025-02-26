@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 class KstarEceInfo(Connection):
     def __init__(self, shot, clist):
         # from iKSTAR
-        super(KstarEceInfo,self).__init__('172.17.100.200:8005')  # call __init__ in Connection
+        super(KstarEceInfo,self).__init__('mdsr.kstar.kfe.re.kr:8005')  # call __init__ in Connection
         # from opi to CSS Host PC
         # super(KstarMds,self).__init__('172.17.102.69:8000')  # call __init__ in Connection
         self.shot = shot

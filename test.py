@@ -32,7 +32,7 @@ A.set_profile(geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)
 shot = 19118
 time = 2350
 clist = ['ECEI_G0101-2408']
-select = 'mean' # take mean or max location of emissivity profile 
+select = 'max' # take mean or max location of emissivity profile 
 fname = f'data/ecei_pos_{shot}_{clist[0]}_{time}ms_b{bfactor}_{select}.pkl'
 
 A.set_channel(shot, clist)

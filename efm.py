@@ -14,6 +14,7 @@ import time
 
 from kstar_ece_info import *
 from kstar_ecei_info import *
+from kstar_eceirt_info import *
 from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
 from pintp import intp_prof
@@ -38,10 +39,14 @@ class EceFwdMod(object):
         self.shot = shot
 
         #### diagnostics specific parameters 
-        if 'ECEI' in clist[0]:
+        if 'ECEI' in clist[0] and shot < 35000:
             self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
             self.diag = KstarEceiInfo(shot, clist)
+        elif 'ECEI' in clist[0] and shot > 35000:
+            self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
+            self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
+            self.diag = KstarEceiRemoteInfo(shot, clist)            
         else:
             self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
