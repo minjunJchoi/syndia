@@ -40,6 +40,8 @@ class KstarEceiInfo(object):
         elif 30540 < shot:
             self.data_path = '/eceidata2/exp_2022/'
 
+        self.data_path = '/scratch/mjchoi/syndia/run/data/'
+
         self.clist = expand_clist(clist)
         cnum = len(self.clist)
 

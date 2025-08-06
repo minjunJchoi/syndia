@@ -12,9 +12,9 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 import time
 
-from kstar_ece_info import *
+# from kstar_ece_info import *
 from kstar_ecei_info import *
-from kstar_eceirt_info import *
+# from kstar_eceirt_info import *
 from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
 from pintp import intp_prof
