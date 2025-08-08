@@ -140,18 +140,35 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
     ds = 0.005 # 5 mm grad step : similar to TORBEAM
     dt = 1.0/(freq*1e9) # time step
 
-    # define functions
     omega = 2*np.pi*freq*1e9 # [rad/s]
-    wpe2 = lambda R,z: (5.64e4)**2*(pf.F_ne(R,z)*1.0e-6) # [rad/s]
-    wce2 = lambda R,z: (1.76e7*pf.F_B(R,z)*1e4)**2 # [rad/s]
+
+    # Small cache for repeated (R,z) evaluations to reduce expensive pf calls
+    # Quantize to 1e-4 m (~0.1 mm) grid to improve hit rate without losing accuracy
+    _cache = {}
+    def _q(v):
+        return round(float(v), 4)
+    def _get_wpe2(R, z):
+        key = ('wpe2', _q(R), _q(z))
+        val = _cache.get(key)
+        if val is None:
+            val = (5.64e4)**2*(pf.F_ne(R, z)*1.0e-6)
+            _cache[key] = val
+        return val
+    def _get_wce2(R, z):
+        key = ('wce2', _q(R), _q(z))
+        val = _cache.get(key)
+        if val is None:
+            val = (1.76e7*pf.F_B(R, z)*1e4)**2
+            _cache[key] = val
+        return val
 
     # ray tracing for each vertical channel
     if hn == 1: # O-mode
         denom = lambda R,z: 1.0
-        numer = lambda R,z: wpe2(R,z)/omega**2.0
+        numer = lambda R,z: _get_wpe2(R,z)/omega**2.0
     elif hn == 2: # X-mode
-        denom = lambda R,z: 1.0 + wpe2(R,z)*wce2(R,z)/(omega**2.0 - wpe2(R,z) - wce2(R,z))**2
-        numer = lambda R,z: wpe2(R,z)/omega**2.0*(omega**2.0 - wpe2(R,z))/(omega**2.0 - wpe2(R,z) - wce2(R,z))
+        denom = lambda R,z: 1.0 + _get_wpe2(R,z)*_get_wce2(R,z)/(omega**2.0 - _get_wpe2(R,z) - _get_wce2(R,z))**2
+        numer = lambda R,z: _get_wpe2(R,z)/omega**2.0*(omega**2.0 - _get_wpe2(R,z))/(omega**2.0 - _get_wpe2(R,z) - _get_wce2(R,z))
 
     dnumerdr = lambda R,z: (numer(R+ds,z) - numer(R-ds,z))/(2.0*ds)
     dnumerdz = lambda R,z: (numer(R,z+ds) - numer(R,z-ds))/(2.0*ds)
@@ -162,19 +179,23 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
     l = 1
     nmax = 1000
 
-    Rp = np.array([Rinit])
-    zp = np.array([zinit])
+    Rp_list = [Rinit]
+    zp_list = [zinit]
 
-    R = np.array([Rinit]) # [m]
-    z = np.array([zinit]) # [m]
+    R = float(Rinit) # [m]
+    z = float(zinit) # [m]
 
-    kR = -omega/c*np.cos(ainit)
-    kz = omega/c*np.sin(ainit)
+    kR = -omega/c*math.cos(ainit)
+    kz = omega/c*math.sin(ainit)
 
-    while l <= nmax and R > 1.265 and R < 2.4 and z < 0.49 and z > -0.49:
+    # bounds
+    Rmin, Rmax = 1.265, 2.4
+    zmin, zmax = -0.49, 0.49
+
+    while l <= nmax and Rmin < R < Rmax and zmin < z < zmax:
         if l > 1:
-            Rp = np.append(Rp, R)
-            zp = np.append(zp, z)
+            Rp_list.append(R)
+            zp_list.append(z)
 
         dRdt = (c**2.0/omega)*kR/denom(R,z)
         dzdt = (c**2.0/omega)*kz/denom(R,z)
@@ -182,21 +203,18 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
         R = R + dRdt*dt
         z = z + dzdt*dt
 
-        kR2 = kR + dkRdt(R,z)*dt
-        kz2 = kz + dkzdt(R,z)*dt
+        kR += dkRdt(R,z)*dt
+        kz += dkzdt(R,z)*dt
 
-        kR = kR2
-        kz = kz2
+        l += 1
 
-        l = l + 1
-
-    Rp = np.array(Rp)
-    zp = np.array(zp)
+    Rp = np.array(Rp_list)
+    zp = np.array(zp_list)
 
     return Rp, zp
 
 
-def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
+def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf, verbose=False):
     # functions needed maybe
     wce = lambda R,z: e*pf.F_B(R,z)/me # [rad/s]
 
@@ -211,13 +229,6 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     idx1 = ridx[0][0]
     idx2 = ridx[0][-1]
 
-    #print('Bt at R=1.8 m = {:0}'.format(pf.F_B(1.8, 0))) # Bt at 1.8 m [Bt]
-    # Rcold
-    cidx = np.where(np.abs(fRz - freq) == np.abs(fRz - freq).min())
-    Rcold = Rp[cidx]
-    zcold = zp[cidx]
-    #print(freq, wce(Rcold, zcold)/(2*np.pi*1e9)*hn)
-
     # Rp, zp between idx1 idx2 from lfs to hfs; calculate angle between emission direction and B-field
     Rp = Rp[idx1:(idx2+1)]
     zp = zp[idx1:(idx2+1)]
@@ -228,7 +239,12 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
         theta[i] = math.acos( Bvec.dot(Rvec) / ( np.sqrt(Bvec.dot(Bvec)) * np.sqrt(Rvec.dot(Rvec)) ) ) # [rad]
     theta[0] = theta[1] + (theta[1]-theta[2])
 
-    print('Rcold, Rpath ends = ', Rcold, Rp[0], Rp[-1]) # cold resonance and beam path ends
+    if verbose:
+        # Rcold
+        cidx = np.where(np.abs(fRz - freq) == np.abs(fRz - freq).min())
+        Rcold = Rp[cidx]
+        zcold = zp[cidx]
+        print('Rcold, Rpath ends = ', Rcold, Rp[0], Rp[-1])
 
     # interpolation (for better accuracy) and change direction from hfs to lfs
     idx = np.arange(Rp.size-1,-1,-1)
@@ -239,9 +255,6 @@ def set_beam_path(Rp, zp, hn, freq, pstart, pend, pint, pf):
     Rp = fRp(nidx)
     zp = fzp(nidx)
     theta = fth(nidx)
-
-    #print('perpendicular wave') # theta = np.pi/2 [rad]
-    #theta = 0*theta + np.pi/2
 
     return Rp, zp, theta
 

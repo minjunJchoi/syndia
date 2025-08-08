@@ -44,6 +44,24 @@ class ProfFunc(object):
         print('Te file = {}'.format(Te_fn))
         print('ne file = {}'.format(ne_fn))
 
+        # Cache heavy interpolators once (major speed-up)
+        # 1) psi(R,z) interpolator from geqdsk (used in F_psin/F_ne/F_Te)
+        try:
+            self._psi_interp = self.geq.get_psi_normal()
+        except Exception:
+            # Fallback to building on first use
+            self._psi_interp = None
+        # 2) ne(psin) and Te(psin) 1D interpolators
+        #    Use bounds handling to mimic original behavior: psin>=1 -> small edge value 0.01
+        self._ne_interp = interpolate.interp1d(
+            self.psin_ne, self.ne, kind='linear', bounds_error=False,
+            fill_value=(self.ne[0], 0.01)
+        )
+        self._Te_interp = interpolate.interp1d(
+            self.psin_Te, self.Te, kind='linear', bounds_error=False,
+            fill_value=(self.Te[0], 0.01)
+        )
+
     # B = f(R, z) [T] ######################## different interpolation may result in difference
     def F_B(self, R, z):
         if type(R) is np.ndarray:
@@ -76,16 +94,17 @@ class ProfFunc(object):
 
     # psin = f(R, z) ######################## different interpolation may result in difference
     def F_psin(self, R, z):
-        f = self.geq.get_psi_normal() # interpolate.interp2d (return 2d data with two 1d coordinates)
+        # Reuse cached psi interpolator if available
+        if self._psi_interp is None:
+            self._psi_interp = self.geq.get_psi_normal()
+        f = self._psi_interp
         return f(R, z)
 
     # ne [m^-3] = f(psin)
     def F_ne_psin(self, psin):
-        if psin < 1:
-            f = interpolate.interp1d(self.psin_ne, self.ne, kind='linear')
-        else:
-            f = lambda psin: np.array([0.01])
-        return f(psin)*1e19
+        # Use cached 1D interpolator; emulate original edge behavior
+        val = self._ne_interp(psin)
+        return val*1e19
 
     # ne [m^-3] = f(R, z) [m, m]
     def F_ne(self, R, z):
@@ -102,11 +121,9 @@ class ProfFunc(object):
 
     # Te [J] = f(psin)
     def F_Te_psin(self, psin):
-        if psin < 1:
-            f = interpolate.interp1d(self.psin_Te, self.Te, kind='linear')
-        else:
-            f = lambda psin: np.array([0.01])
-        return f(psin)*1000*1.602*1e-19
+        # Use cached 1D interpolator; emulate original edge behavior
+        val = self._Te_interp(psin)
+        return val*1000*1.602*1e-19
 
     # Te [J] = f(R, z) [m, m]
     def F_Te(self, R, z):
