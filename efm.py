@@ -1,8 +1,8 @@
 """
 ECE intensity forward modeling; modified for both ECE and ECEI (2022.01.12)
 Repo : https://github.com/minjunJchoi/syndia
-Author : Minjun J. Choi (mjchoi@nfri.re.kr)
-Collaborators : Jieun Lee, Yoonbum Nam
+Author : Minjun J. Choi (mjchoi@kfe.re.kr)
+Collaborators : Jieun Lee, Yoonbum Nam, Github Copilot (Claude Sonnet 4)
 """
 import subprocess
 import h5py
@@ -12,9 +12,7 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from functools import partial
 import multiprocessing as mp
-from parallel_utils import process_single_channel_fine_parallel
 
 # from kstar_ece_info import *
 from kstar_ecei_info import *
@@ -119,36 +117,29 @@ class EceFwdMod(object):
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
             self.diag = KstarEceInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0, select='mean', parallel=True, n_processes=None, parallel_mode='channel'):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0, select='mean', parallel=True, n_processes=None):
         """
         Run ECE forward modeling
         
         Parameters:
         -----------
-        parallel : bool, default=True
-            If True, use parallel processing
-        n_processes : int, default=None
+        Nf = 1 # number of frequency rays for a single channel
+        fstart = 0 # [GHz] frequency bandwidth -0.3
+        fend = 0 # [GHz] frequency bandwidth +0.3
+        Nz = 1 # number of vertical rays for a single channel
+        zstart = 0 # [mm] first ray at the mini lens -14
+        zend = 0 # [mm] last ray at the mini lens 14
+        pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
+        pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
+        pint = 0.1 # ECE integration path inter step. 0.1 = 10%
+        Rinit = 2.39 # where vacuum region ends and plasma region starts
+        torbeam = 1 # 1 : TORBEAM, 0 : Ray tracing
+
+        parallel = bool, default=True
+            If True, use parallel processing; Parallelize over channels using multiprocessing
+        n_processes = int, default=None
             Number of processes to use. If None, use number of CPU cores
-        parallel_mode : str, default='channel'
-            - 'channel': Parallelize over channels (recommended for many channels)
-            - 'sub_ray': Parallelize sub-rays within each channel (for few channels, many sub-rays)
         """
-        ## bpath interp TORBEAM or Ray tracing
-        ## pintp
-        ## eceint
-        # Nf = 1 # number of frequency rays for a single channel
-        # fstart = 0 # [GHz] frequency bandwidth -0.3
-        # fend = 0 # [GHz] frequency bandwidth +0.3
-        # Nz = 1 # number of vertical rays for a single channel
-        # zstart = 0 # [mm] first ray at the mini lens -14
-        # zend = 0 # [mm] last ray at the mini lens 14
-
-        # pstart = 7.8 # [GHz] cal start point (hfs) = cold resonance + pstart
-        # pend = -2 # [GHz] cal end point (lfs) = cold resonance + pend
-        # pint = 0.1 # ECE integration path inter step. 0.1 = 10%
-        # Rinit = 2.39 # where vacuum region ends and plasma region starts
-
-        # torbeam = 1 # 1 : TORBEAM, 0 : Ray tracing
 
         # ready for TORBEAM
         if torbeam == 1:
@@ -171,43 +162,21 @@ class EceFwdMod(object):
             if n_processes is None:
                 n_processes = mp.cpu_count()
             
-            if parallel_mode == 'channel':
-                print(f"Using channel-level parallel processing with {n_processes} processes for {cnum} channels")
+            print(f"Using channel-level parallel processing with {n_processes} processes for {cnum} channels")
+            
+            # Prepare arguments for each channel
+            args_list = []
+            for cn in range(cnum):
+                args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz, 
+                        pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf)
+                args_list.append(args)
+            
+            # Process channels in parallel
+            with ProcessPoolExecutor(max_workers=n_processes) as executor:
+                futures = [executor.submit(process_single_channel, args) for args in args_list]
                 
-                # Prepare arguments for each channel
-                args_list = []
-                for cn in range(cnum):
-                    args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz, 
-                           pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf)
-                    args_list.append(args)
-                
-                # Process channels in parallel
-                with ProcessPoolExecutor(max_workers=n_processes) as executor:
-                    futures = [executor.submit(process_single_channel, args) for args in args_list]
-                    
-                    for future in as_completed(futures):
-                        cn, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn = future.result()
-                        
-                        Rch[cn] = Rch_cn
-                        zch[cn] = zch_cn
-                        int_meas[cn] = int_meas_cn
-                        tau[cn] = tau_cn
-                        rad_temp[cn] = rad_temp_cn
-                        abs_temp[cn] = abs_temp_cn
-                        
-                        print(f'Channel {cn}: Rch = {Rch[cn]:.6g}, zch = {zch[cn]:.6g}')
-                        print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}')
-                        print(f'Channel {cn}: abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
-                        
-            elif parallel_mode == 'sub_ray':
-                print(f"Using sub-ray level parallel processing with {n_processes} threads per channel for {cnum} channels")
-                
-                # Process each channel with internal sub-ray parallelization
-                for cn in range(cnum):
-                    args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz,
-                           pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf, n_processes)
-                    
-                    cn, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn = process_single_channel_fine_parallel(args)
+                for future in as_completed(futures):
+                    cn, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn = future.result()
                     
                     Rch[cn] = Rch_cn
                     zch[cn] = zch_cn
@@ -219,8 +188,6 @@ class EceFwdMod(object):
                     print(f'Channel {cn}: Rch = {Rch[cn]:.6g}, zch = {zch[cn]:.6g}')
                     print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}')
                     print(f'Channel {cn}: abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
-            else:
-                raise ValueError(f"Unknown parallel_mode: {parallel_mode}. Use 'channel' or 'sub_ray'")
         else:
             # Sequential processing (original code)
             self._run_sequential(cnum, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select,
@@ -230,72 +197,28 @@ class EceFwdMod(object):
 
     def _run_sequential(self, cnum, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select,
                        int_meas, rad_temp, abs_temp, tau, Rch, zch):
-        """Sequential version of the original run method"""
-        # sub ray dz
-        dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
-
+        """Sequential version using process_single_channel function"""
+        print(f"Using sequential processing for {cnum} channels")
+        
         for cn in range(cnum):
-            # define sub rays
-            fsub = np.linspace(self.diag.ece_freq[cn] + fstart, self.diag.ece_freq[cn] + fend, Nf) # frequency [GHz] of sub rays
-            zsub = np.zeros(dz.size)
-            asub = np.zeros(dz.size)
-            S = 0
-            ## loop over sub rays of a single channel
-            for i in range(dz.size):
-                if 'ECEI' in self.diag.clist[0]: ## If ECEI; vacuum approximation until Rinit
-                    zsub[i], asub[i] = vac_beam_path(self.diag, Rinit, self.diag.vn_list[cn], dz[i]) # vertical position [m] and rangle [rad] of sub rays at Rinit
-                else: # for ECE on midplane
-                    zsub[i] = dz[i]
-                    asub[i] = 0
-
-                for j in range(fsub.size):
-                    # find beam path
-                    if torbeam == 1:
-                        Rp, zp = run_torbeam(self.diag.hn, fsub[j], asub[i], zsub[i], Rinit)
-                    else:
-                        Rp, zp = ray_tracing(self.diag.hn, fsub[j], asub[i], zsub[i], Rinit, self.pf)
-
-                    # find proper range of beam path and make interpolated beam path
-                    Rp, zp, theta = set_beam_path(Rp, zp, self.diag.hn, fsub[j], pstart, pend, pint, self.pf)
-
-                    # profile function along path
-                    s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, self.pf, 0)
-
-                    # calculate ECE intensity along path
-                    ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, self.diag.hn, F_Bs, F_Tes, F_nes, select=select) # [m,m,m,rad,rad/s,hn,funcs]
-
-                    print('{:d}-ray tau = {:g}'.format(j, integrate.trapz(ams,x=s)))
-                    print('{:d}-ray ece_int Iece = {:g}'.format(j, ece_int))
-                    print('{:d}-ray Rm = {:g}'.format(j, Rm))
-                    print('{:d}-ray zm = {:g}'.format(j, zm))
-                    print('{:d}-ray thm = {:g}'.format(j, thm))
-
-                    # channel response in optics and IF
-                    dS = np.exp(-2*(dz[i]/self.Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/self.Bcf )**4)
-                    S = S + dS
-
-                    int_meas[cn] = int_meas[cn] + ece_int * dS
-                    tau[cn] = tau[cn] + integrate.trapz(ams,x=s) * dS                    
-                    Rch[cn] = Rch[cn] + Rm * dS
-                    zch[cn] = zch[cn] + zm * dS
-
-            # average over response
-            int_meas[cn] = int_meas[cn] / S
-            tau[cn] = tau[cn] / S            
-            Rch[cn] = Rch[cn] / S
-            zch[cn] = zch[cn] / S
-
-            # radiation temperature
-            rad_temp[cn] = int_meas[cn] / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
-            abs_temp[cn] = self.pf.F_Te(Rch[cn], zch[cn]) / (1000.0*e) # [keV]
-
-            # print('S = {:g}'.format(S))
-            print('Rch = {:g}'.format(Rch[cn]))
-            print('zch = {:g}'.format(zch[cn]))
-            print('imeas = {:g}'.format(int_meas[cn]))
-            print('rad_temp = {:g}'.format(rad_temp[cn]))
-            print('abs_temp = {:g}'.format(abs_temp[cn]))
-            print('tau = {:g}'.format(tau[cn]))
+            # Prepare arguments for the channel
+            args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz, 
+                    pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf)
+            
+            # Process single channel
+            cn_result, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn = process_single_channel(args)
+            
+            # Store results
+            Rch[cn] = Rch_cn
+            zch[cn] = zch_cn
+            int_meas[cn] = int_meas_cn
+            tau[cn] = tau_cn
+            rad_temp[cn] = rad_temp_cn
+            abs_temp[cn] = abs_temp_cn
+            
+            print(f'Channel {cn}: Rch = {Rch[cn]:.6g}, zch = {zch[cn]:.6g}')
+            print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}')
+            print(f'Channel {cn}: abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
 
 #plt.plot(s,ams)
 #plt.show()
