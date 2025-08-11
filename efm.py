@@ -42,10 +42,10 @@ def process_single_channel(args):
     asub = np.zeros(dz.size)
     S = 0
     
-    int_meas_cn = 0
-    tau_cn = 0
-    Rch_cn = 0
-    zch_cn = 0
+    int_meas = 0
+    tau = 0
+    Rch = 0
+    zch = 0
     
     ## loop over sub rays of a single channel
     for i in range(dz.size):
@@ -75,22 +75,22 @@ def process_single_channel(args):
             dS = np.exp(-2*(dz[i]/Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/Bcf )**4)
             S = S + dS
 
-            int_meas_cn = int_meas_cn + ece_int * dS
-            tau_cn = tau_cn + integrate.trapz(ams,x=s) * dS                    
-            Rch_cn = Rch_cn + Rm * dS
-            zch_cn = zch_cn + zm * dS
+            int_meas = int_meas + ece_int * dS
+            tau = tau + integrate.trapz(ams,x=s) * dS                    
+            Rch = Rch + Rm * dS
+            zch = zch + zm * dS
 
     # average over response
-    int_meas_cn = int_meas_cn / S
-    tau_cn = tau_cn / S            
-    Rch_cn = Rch_cn / S
-    zch_cn = zch_cn / S
+    int_meas = int_meas / S
+    tau = tau / S            
+    Rch = Rch / S
+    zch = zch / S
 
     # radiation temperature
-    rad_temp_cn = int_meas_cn / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
-    abs_temp_cn = pf.F_Te(Rch_cn, zch_cn) / (1000.0*e) # [keV]
+    rad_temp = int_meas / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
+    abs_temp = pf.F_Te(Rch, zch) / (1000.0*e) # [keV]
 
-    return cn, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn
+    return cn, Rch, zch, int_meas, tau, rad_temp, abs_temp
 
 class EceFwdMod(object):
     def __init__(self):
