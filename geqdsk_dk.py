@@ -606,7 +606,12 @@ class geqdsk_dk(Geqdsk):
           z   = self.data['z'][0]
           psi_mag = self.get('simag')
           psiw    = self.get('psiw')
-          self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='cubic')
+        #   self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='cubic')
+          normalized_psi = (self.get('psirz') - psi_mag) / psiw
+        #   # RegularGridInterpolator is generally preferred over interp2d for performance.
+        #   # Note that RegularGridInterpolator expects values to be in (nx, ny) order,
+        #   # while interp2d expects (ny, nx), so a transpose is needed.
+          self.f_normal = interpolate.RegularGridInterpolator((r, z), normalized_psi.T, method='cubic', bounds_error=False, fill_value=None)
           self.psi_inter_normal = True
         else:
             pass;

@@ -136,41 +136,49 @@ def run_torbeam(hn, freq, ainit, zinit, Rinit):
     return Rp, zp
 
 
-def ray_tracing(hn, freq, ainit, zinit, Rinit, pf):
+def ray_tracing(hn, freq, ainit, zinit, Rinit, pf, use_cache=True):
     ds = 0.005 # 5 mm grad step : similar to TORBEAM
     dt = 1.0/(freq*1e9) # time step
 
     omega = 2*np.pi*freq*1e9 # [rad/s]
 
     # Small cache for repeated (R,z) evaluations to reduce expensive pf calls
-    _cache = {}
-    def _q(v):
-        return round(float(v), 5)
+    if use_cache:
+        _cache = {}
+        def _q(v):
+            return round(float(v), 5)
     
     # Characteristic frequencies
-    def _wpe2(R, z):
-        key = ('wpe2', _q(R), _q(z))
-        val = _cache.get(key)
-        if val is None:
-            val = (5.64e4)**2*(pf.F_ne(R, z)*1.0e-6)
-            _cache[key] = val
-        return val
-    
-    def _wce2(R, z):
-        key = ('wce2', _q(R), _q(z))
-        val = _cache.get(key)
-        if val is None:
-            val = (1.76e7*pf.F_B(R, z)*1e4)**2
-            _cache[key] = val
-        return val
+    if use_cache:
+        def wpe2(R, z):
+            key = ('wpe2', _q(R), _q(z))
+            val = _cache.get(key)
+            if val is None:
+                val = (5.64e4)**2*(pf.F_ne(R, z)*1.0e-6)
+                _cache[key] = val
+            return val
+
+        def wce2(R, z):
+            key = ('wce2', _q(R), _q(z))
+            val = _cache.get(key)
+            if val is None:
+                val = (1.76e7*pf.F_B(R, z)*1e4)**2
+                _cache[key] = val
+            return val
+    else:
+        def wpe2(R, z):
+            return (5.64e4)**2*(pf.F_ne(R, z)*1.0e-6)
+        
+        def wce2(R, z):
+            return (1.76e7*pf.F_B(R, z)*1e4)**2
 
     # ray tracing for each vertical channel
     if hn == 1: # O-mode
         denom = lambda R,z: 1.0
-        numer = lambda R,z: _wpe2(R,z)/omega**2.0
+        numer = lambda R,z: wpe2(R,z)/omega**2.0
     elif hn == 2: # X-mode
-        denom = lambda R,z: 1.0 + _wpe2(R,z)*_wce2(R,z)/(omega**2.0 - _wpe2(R,z) - _wce2(R,z))**2
-        numer = lambda R,z: _wpe2(R,z)/omega**2.0*(omega**2.0 - _wpe2(R,z))/(omega**2.0 - _wpe2(R,z) - _wce2(R,z))
+        denom = lambda R,z: 1.0 + wpe2(R,z)*wce2(R,z)/(omega**2.0 - wpe2(R,z) - wce2(R,z))**2
+        numer = lambda R,z: wpe2(R,z)/omega**2.0*(omega**2.0 - wpe2(R,z))/(omega**2.0 - wpe2(R,z) - wce2(R,z))
 
     dnumerdr = lambda R,z: (numer(R+ds,z) - numer(R-ds,z))/(2.0*ds)
     dnumerdz = lambda R,z: (numer(R,z+ds) - numer(R,z-ds))/(2.0*ds)

@@ -35,47 +35,52 @@ eps = 8.854*1e-12
 c = 299792458
 mc2 = me*c**2
 
-def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne, select='mean'): # [m], [m], [rad], [rad/s], harmonic number   
-    # Small cache for evaluations to reduce expensive F_B, F_ne calls
-    _cache = {}
-    def _q(v):
-        return round(float(v), 5)
+def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne, select='mean', use_cache=True): # [m], [m], [rad], [rad/s], harmonic number   
+    if use_cache:
+        # Small cache for evaluations to reduce expensive F_B, F_ne calls
+        _cache = {}
+        def _q(v):
+            return round(float(v), 5)
 
     # characteristic frequencies
-    # wce = lambda s: e*F_B(s)/me # [rad/s]
-    # wpe = lambda s: np.sqrt(F_ne(s)*e**2/(eps*me)) # [rad/s]
-    def wce(s):
-        key = ('wce', _q(s))
-        val = _cache.get(key)
-        if val is None:
-            val = e*F_B(s)/me # [rad/s]
-            _cache[key] = val
-        return val   
-    def wpe(s):
-        key = ('wpe', _q(s))
-        val = _cache.get(key)
-        if val is None:
-            val = np.sqrt(F_ne(s)*e**2/(eps*me)) # [rad/s]
-            _cache[key] = val
-        return val
+    if use_cache:
+        def wce(s):
+            key = ('wce', _q(s))
+            val = _cache.get(key)
+            if val is None:
+                val = e*F_B(s)/me # [rad/s]
+                _cache[key] = val
+            return val   
+        def wpe(s):
+            key = ('wpe', _q(s))
+            val = _cache.get(key)
+            if val is None:
+                val = np.sqrt(F_ne(s)*e**2/(eps*me)) # [rad/s]
+                _cache[key] = val
+            return val
+    else:
+        wce = lambda s: e*F_B(s)/me # [rad/s]
+        wpe = lambda s: np.sqrt(F_ne(s)*e**2/(eps*me)) # [rad/s]
 
     # characteristic functions
-    # zeta = lambda s: mc2/F_Te(s)/2
-    # mu = lambda s,w: (w/(m*wce(s)))**2
-    def zeta(s):
-        key = ('zeta', _q(s))
-        val = _cache.get(key)
-        if val is None:
-            val = mc2/F_Te(s)/2
-            _cache[key] = val
-        return val
-    def mu(s, w):
-        key = ('mu', _q(s), _q(w))
-        val = _cache.get(key)
-        if val is None:
-            val = (w/(m*wce(s)))**2
-            _cache[key] = val
-        return val    
+    if use_cache:
+        def zeta(s):
+            key = ('zeta', _q(s))
+            val = _cache.get(key)
+            if val is None:
+                val = mc2/F_Te(s)/2
+                _cache[key] = val
+            return val
+        def mu(s, w):
+            key = ('mu', _q(s), _q(w))
+            val = _cache.get(key)
+            if val is None:
+                val = (w/(m*wce(s)))**2
+                _cache[key] = val
+            return val
+    else:
+        zeta = lambda s: mc2/F_Te(s)/2
+        mu = lambda s,w: (w/(m*wce(s)))**2
 
     # refractive index
     X = lambda s: ( wpe(s)/(m*wce(s)) )**2

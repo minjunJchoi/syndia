@@ -41,6 +41,7 @@ def process_single_channel(args):
     zsub = np.zeros(dz.size)
     asub = np.zeros(dz.size)
     S = 0
+    I = 0
     
     int_meas = 0
     tau = 0
@@ -74,17 +75,18 @@ def process_single_channel(args):
             # channel response in optics and IF
             dS = np.exp(-2*(dz[i]/Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/Bcf )**4)
             S = S + dS
+            I = I + ece_int * dS
 
             int_meas = int_meas + ece_int * dS
             tau = tau + integrate.trapz(ams,x=s) * dS                    
-            Rch = Rch + Rm * dS
-            zch = zch + zm * dS
+            Rch = Rch + Rm * ece_int * dS
+            zch = zch + zm * ece_int * dS
 
     # average over response
     int_meas = int_meas / S
     tau = tau / S            
-    Rch = Rch / S
-    zch = zch / S
+    Rch = Rch / I
+    zch = zch / I
 
     # radiation temperature
     rad_temp = int_meas / (np.mean(fsub)*2.0*np.pi*1e9/(2.0*np.pi*c))**2.0 / (1000.0*e) # [keV]
@@ -186,8 +188,7 @@ class EceFwdMod(object):
                     abs_temp[cn] = abs_temp_cn
                     
                     print(f'Channel {cn}: Rch = {Rch[cn]:.6g}, zch = {zch[cn]:.6g}')
-                    print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}')
-                    print(f'Channel {cn}: abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
+                    print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}, abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
         else:
             # Sequential processing (original code)
             self._run_sequential(cnum, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select,
@@ -217,8 +218,7 @@ class EceFwdMod(object):
             abs_temp[cn] = abs_temp_cn
             
             print(f'Channel {cn}: Rch = {Rch[cn]:.6g}, zch = {zch[cn]:.6g}')
-            print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}')
-            print(f'Channel {cn}: abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
+            print(f'Channel {cn}: imeas = {int_meas[cn]:.6g}, rad_temp = {rad_temp[cn]:.6g}, abs_temp = {abs_temp[cn]:.6g}, tau = {tau[cn]:.6g}')
 
 #plt.plot(s,ams)
 #plt.show()

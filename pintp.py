@@ -31,7 +31,7 @@ eps = 8.854*1e-12
 c = 299792458
 mc2 = me*c**2
 
-def intp_prof(Rp, zp, th, pf, step): # [m], [m], [rad], [rad/s], harmonic number
+def intp_prof(Rp, zp, th, pf, step): # [m], [m], [rad]
     # define path from the inside s=0
     s = np.zeros(Rp.size)
     ds = np.zeros(Rp.size)
