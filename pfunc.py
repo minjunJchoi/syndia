@@ -30,7 +30,7 @@ class ProfFunc(object):
         ## B = B*bfactor; considering B-field uncertainty 
         self.bfactor = bfactor
 
-        ## read 1D profile data
+        ## read equilibrium data
         # geqdsk file
         self.geq = geqdsk_dk(filename=geqdsk_fn)
         # density data: psin_ne, ne [10^-19 m^-3]; well behaving data
@@ -50,30 +50,10 @@ class ProfFunc(object):
         # 2) ne(psin) and Te(psin) 1D interpolators (used in F_ne/F_Te)
         self._ne_interp = interpolate.interp1d(self.psin_ne, self.ne, kind='linear', bounds_error=False, fill_value=(self.ne[0], 0.01))
         self._Te_interp = interpolate.interp1d(self.psin_Te, self.Te, kind='linear', bounds_error=False, fill_value=(self.Te[0], 0.01))
-        # 3) (normalized perturbations) ne_delta((R, z)) and Te_delta((R, z)) 2D interpolators
-        # Locations of blobs
-        R0 = np.array([2.15, 2.17, 2.19])
-        z0 = np.array([-0.1, 0, 0.1])
-
-        # Mesh grid for 2d interpolation
-        Raxis = np.arange(1.2, 2.4, 0.001)
-        zaxis = np.arange(-0.5, 0.5, 0.001)
-        RR, zz = np.meshgrid(Raxis, zaxis, indexing='ij')
-
-        # Te_delta and ne_delta define
-        Te_delta = np.zeros(RR.shape)
-        ne_delta = np.zeros(RR.shape)
-
-        # Add perturbations 
-        for Ri, zi in zip(R0, z0):
-            Te_delta += 0.0 * np.exp(-((RR - Ri)**2 + (zz - zi)**2/4) / (2 * 0.01**2))
-        
-        for Ri, zi in zip(R0, z0):
-            ne_delta += 0.0 * np.exp(-((RR - Ri)**2 + (zz - zi)**2/4) / (2 * 0.01**2))
-
-        self._Te_delta_interp = interpolate.RegularGridInterpolator((Raxis, zaxis), Te_delta, bounds_error=False, fill_value=0.0)
-        self._ne_delta_interp = interpolate.RegularGridInterpolator((Raxis, zaxis), ne_delta, bounds_error=False, fill_value=0.0)
-
+        # 3) (normalized perturbations) ne_pert((R, z, time)) and Te_pert((R, z, time)) 2D interpolators
+        self._pert_time = 0
+        self._Te_pert_interp = None
+        self._ne_pert_interp = None
 
     # B = f(R, z) [T] ######################## different interpolation may result in difference
     def F_B(self, R, z):
@@ -115,9 +95,10 @@ class ProfFunc(object):
         return val*1e19
 
     # delta ne [normalized] = f(R, z)
-    def F_ne_delta(self, R, z):
-        # In normalized unit total ne_delta = (ne - ne_0) / ne_0
-        return self._ne_delta_interp((R, z))
+    def F_ne_pert(self, R, z):
+        # In normalized unit total ne_pert = (ne - ne_0) / ne_0
+        time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
+        return self._ne_pert_interp((R, z, time)) if self._ne_pert_interp is not None else 0.0
 
     # ne [m^-3] = f(R, z) [m, m]
     def F_ne(self, R, z):
@@ -125,7 +106,7 @@ class ProfFunc(object):
         ne = self.F_ne_psin(self.F_psin(R, z))
 
         # Total density
-        ne = ne + ne * self.F_ne_delta(R, z)  # Add normalized perturbation
+        ne = ne + ne * self.F_ne_pert(R, z)  # Add normalized perturbation
         return ne
 
     # Te [J] = f(psin)
@@ -134,9 +115,10 @@ class ProfFunc(object):
         return val*1000*1.602*1e-19
 
     # delta Te [normalized] = f(R, z)
-    def F_Te_delta(self, R, z):
-        # In normalized unit total Te_delta = (Te - Te_0) / Te_0  
-        return self._Te_delta_interp((R, z))
+    def F_Te_pert(self, R, z):
+        # In normalized unit total Te_pert = (Te - Te_0) / Te_0
+        time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
+        return self._Te_pert_interp((R, z, time)) if self._Te_pert_interp is not None else 0.0
 
     # Te [J] = f(R, z) [m, m]
     def F_Te(self, R, z):
@@ -144,7 +126,7 @@ class ProfFunc(object):
         Te = self.F_Te_psin(self.F_psin(R, z))
 
         # Total temperature
-        Te = Te + Te * self.F_Te_delta(R, z)  # Add normalized perturbation
+        Te = Te + Te * self.F_Te_pert(R, z)  # Add normalized perturbation
         return Te
 
 
