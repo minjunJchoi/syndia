@@ -97,8 +97,9 @@ class ProfFunc(object):
     # delta ne [normalized] = f(R, z)
     def F_ne_pert(self, R, z):
         # In normalized unit total ne_pert = (ne - ne_0) / ne_0
-        time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
-        return self._ne_pert_interp((R, z, time)) if self._ne_pert_interp is not None else 0.0
+        # time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
+        # return self._ne_pert_interp((R, z, time)) if self._ne_pert_interp is not None else 0.0
+        return self._ne_pert_interp((R, z)) if self._ne_pert_interp is not None else 0.0
 
     # ne [m^-3] = f(R, z) [m, m]
     def F_ne(self, R, z):
@@ -117,8 +118,9 @@ class ProfFunc(object):
     # delta Te [normalized] = f(R, z)
     def F_Te_pert(self, R, z):
         # In normalized unit total Te_pert = (Te - Te_0) / Te_0
-        time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
-        return self._Te_pert_interp((R, z, time)) if self._Te_pert_interp is not None else 0.0
+        # time = self._pert_time * np.ones_like(R)  # Perturbation time is constant for all R, z
+        # return self._Te_pert_interp((R, z, time)) if self._Te_pert_interp is not None else 0.0
+        return self._Te_pert_interp((R, z)) if self._Te_pert_interp is not None else 0.0
 
     # Te [J] = f(R, z) [m, m]
     def F_Te(self, R, z):
