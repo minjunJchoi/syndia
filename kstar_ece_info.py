@@ -13,12 +13,14 @@ from MDSplus import Connection
 import numpy as np
 import matplotlib.pyplot as plt
 
-class KstarEceInfo(Connection):
+# Access MDSplus server to get ECEI operation parameters # Do not inherit Connection for multiprocessing compatibility
+MDSPLUS_SERVER = os.environ.get('MDSPLUS_SERVER', 'mdsr.kstar.kfe.re.kr:8005')
+mdsconn = Connection(MDSPLUS_SERVER)
+
+class KstarEceInfo(object):
     def __init__(self, shot, clist):
-        # from iKSTAR
-        super(KstarEceInfo,self).__init__('mdsr.kstar.kfe.re.kr:8005')  # call __init__ in Connection
-        # from opi to CSS Host PC
-        # super(KstarMds,self).__init__('172.17.102.69:8000')  # call __init__ in Connection
+        # super(KstarEceInfo,self).__init__(MDSPLUS_SERVER)  # call __init__ in Connection
+
         self.shot = shot
         self.clist = clist
         
@@ -65,11 +67,11 @@ class KstarEceInfo(Connection):
                 print('rpos is obtained from kstardata (2nd harmonics cold resonance)')
   
     def read_mds_rpos(self):
-        # find tree
-        tree = find_tree(self.clist[0])
+        # MDSplus server tree
+        tree = 'KSTAR'
 
         # open tree
-        self.openTree(tree, self.shot)
+        mdsconn.openTree(tree, self.shot)
         print('OPEN MDS tree {:s} to read rpos'.format(tree))
             
         # read rnode from MDSplus 
@@ -80,16 +82,16 @@ class KstarEceInfo(Connection):
                 rnode = '\{:s}:RPOS2ND'.format(self.clist[c])
 
             # read rnode
-            rpos = self.get(rnode).data()
+            rpos = mdsconn.get(rnode).data()
             if hasattr(rpos, "__len__"):
-                self.rpos[c] = self.get(rnode).data()[0]
+                self.rpos[c] = mdsconn.get(rnode).data()[0]
             else:
                 self.rpos[c] = rpos
 
             # print('rpos of {:s} is read from MDS tree {:s}'.format(self.clist[c], tree))
 
         # close tree
-        self.closeTree(tree, self.shot)
+        mdsconn.closeTree(tree, self.shot)
 
 
 class NoPosMdsError(Exception):

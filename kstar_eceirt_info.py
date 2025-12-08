@@ -6,15 +6,19 @@ Acknowledgements : Jaehyun Lee
 """
 #!/usr/bin/env python2.7
 
+import os
 import h5py
 import numpy as np
 from MDSplus import Connection
 
 ECEI_TREE = 'ECEI'
 
-class KstarEceiRemoteInfo(Connection):
+# Access MDSplus server to get ECEI operation parameters # Do not inherit Connection for multiprocessing compatibility
+MDSPLUS_SERVER = os.environ.get('MDSPLUS_SERVER', 'mdsr.kstar.kfe.re.kr:8005')
+mdsconn = Connection(MDSPLUS_SERVER)
+
+class KstarEceiRemoteInfo(object):
     def __init__(self, shot, clist):
-        super(KstarEceiRemoteInfo,self).__init__('mdsr.kstar.kfe.re.kr:8005')  # call __init__ in Connection
 
         self.shot = shot
 
@@ -24,28 +28,27 @@ class KstarEceiRemoteInfo(Connection):
         self.cnidx1 = 7
         self.dev = self.clist[0][5:7]
 
-
         # read operation parameters from MDSplus
-        self.openTree(ECEI_TREE, self.shot)
+        mdsconn.openTree(ECEI_TREE, self.shot)
 
         hn_node = '\\{0}::TOP.ECEI_{1}:{2}_MODE'.format(ECEI_TREE, self.dev, self.dev) 
-        self.hn = self.get(hn_node).data()
+        self.hn = mdsconn.get(hn_node).data()
+        self.hn = int(self.hn)
 
         itf_node = '\\{0}::TOP:{1}'.format(ECEI_TREE, 'ECEI_I_TF') 
-        self.itf = self.get(itf_node).data() # [kA]
+        self.itf = mdsconn.get(itf_node).data() # [kA]
         self.bt = self.itf*0.0995556 # [kA] -> [T]
 
         lo_node = '\\{0}::TOP.ECEI_{1}:{2}_LOFREQ'.format(ECEI_TREE, self.dev, self.dev) 
-        self.lo = self.get(lo_node).data() # [GHz]
+        self.lo = mdsconn.get(lo_node).data() # [GHz]
 
         sf_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSFOCUS'.format(ECEI_TREE, self.dev, self.dev) 
-        self.sf = self.get(sf_node).data() # [mm]
+        self.sf = mdsconn.get(sf_node).data() # [mm]
 
         sz_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSZOOM'.format(ECEI_TREE, self.dev, self.dev) 
-        self.sz = self.get(sz_node).data() # [mm]
+        self.sz = mdsconn.get(sz_node).data() # [mm]
 
-        self.closeTree(ECEI_TREE, self.shot)
-
+        mdsconn.closeTree(ECEI_TREE, self.shot)
     
         # get vn, fn numbers and ece frequency [GHz]
         self.vn_list = np.zeros(cnum, dtype='int16')
