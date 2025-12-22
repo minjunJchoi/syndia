@@ -4,13 +4,10 @@ Repo : https://github.com/minjunJchoi/syndia
 Author : Minjun J. Choi (mjchoi@kfe.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam, Github Copilot (Claude Sonnet 4)
 """
-import subprocess
-import h5py
+import os
 import numpy as np
-import math
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing as mp
 
@@ -21,6 +18,7 @@ from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
 from pintp import intp_prof
 from eceint import ece_intensity
+from geqdsk_dk_MDS import geqdsk_dk_MDS
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -99,7 +97,13 @@ class EceFwdMod(object):
 
     def set_profile(self, geqdsk_fn, Te_fn, ne_fn, bfactor=1.0):
         self.geqdsk_fn = geqdsk_fn
-        self.pf = ProfFunc(geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)
+        if os.path.exists(self.geqdsk_fn) is False:
+            shot = int(geqdsk_fn.split('.')[0][-6:])
+            time = float(geqdsk_fn.split('.')[1]) * 1e-3 # [ms] -> [s] for geqdsk_dk_MDS
+            geq = geqdsk_dk_MDS(shot, time, treename='EFIT01') # default EFIT tree
+            self.geqdsk_fn = geq.file_name
+        
+        self.pf = ProfFunc(self.geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)
 
     def set_channel(self, shot, clist):
         self.shot = shot
