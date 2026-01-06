@@ -17,7 +17,7 @@ The official document describing g-eqdsk files:
 http://fusion.gat.com/conferences/snowmass/working/mfe/physics/p3/equilibria/g_eqdsk_s.pdf
 
 Converted to Python3 
-by Tongnyeol Rhee
+by Tongnyeol Rhee (trhee@kfe.re.kr)
 05 Dec 2019
 
 """

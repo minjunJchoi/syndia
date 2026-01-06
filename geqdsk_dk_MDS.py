@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import numpy as np;
-#from geqdsk import Geqdsk;
-import matplotlib.pyplot as plt;
 from geqdsk_dk import geqdsk_dk;
 import imp, os, sys;
 """
 Class for equilibrium magnetic quantities from MDSplus equilibrium  
-Written by Tongnyeol Rhee
-NFRI, Korea
+Written by Tongnyeol Rhee (trhee@kfe.re.kr)
+KFE(NFRI), Korea
 13 May 2020.
 
 ======License===================
@@ -124,6 +122,7 @@ class geqdsk_dk_MDS(geqdsk_dk):
        ###### Writing to file #######
        for i in [t_index]:
            time_fileout = geqdsk[index_time][i]*1000;
+           os.makedirs('./data/EFIT', exist_ok=True)
            file_name='./data/EFIT/KSTAR_%s_g%06d.%06d'%(treename,shot,time_fileout);
            print('writing..',file_name)
            

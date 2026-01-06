@@ -7,7 +7,7 @@ Acknowledgements : Jaehyun Lee, Gunsu Yun
 """
 #!/usr/bin/env python2.7
 
-
+import os 
 import h5py
 import numpy as np
 
@@ -40,8 +40,9 @@ class KstarEceiInfo(object):
         elif 30540 < shot:
             self.data_path = '/eceidata2/exp_2022/'
 
-        # self.data_path = '/scratch/mjchoi/syndia/run/data/' # on KAIROS
-        self.data_path = '/Users/mjchoi/Work/syndia/run/data/' # on macOS
+        if os.path.exists(self.data_path) == False:
+            # self.data_path = '/scratch/mjchoi/syndia/run/data/' # on KAIROS
+            self.data_path = '/Users/mjchoi/Work/syndia/run/data/' # on macOS
 
         self.clist = expand_clist(clist)
         cnum = len(self.clist)
