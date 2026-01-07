@@ -122,8 +122,8 @@ class geqdsk_dk_MDS(geqdsk_dk):
        ###### Writing to file #######
        for i in [t_index]:
            time_fileout = geqdsk[index_time][i]*1000;
-           os.makedirs('./data/EFIT', exist_ok=True)
-           file_name='./data/EFIT/KSTAR_%s_g%06d.%06d'%(treename,shot,time_fileout);
+           os.makedirs('./data', exist_ok=True)
+           file_name='./data/KSTAR_%s_g%06d.%06d'%(treename,shot,time_fileout);
            print('writing..',file_name)
            
            f=open(file_name,"w");
