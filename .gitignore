@@ -2,9 +2,7 @@ geqdsk.pyc
 geqdsk_dk.pyc
 *.pyc
 *.swp
-data/
 run/
 .ipynb_checkpoints/
 fort.22
-*run.py
 .DS_Store
