@@ -4,12 +4,15 @@ from geqdsk import Geqdsk;
 from scipy import interpolate;
 from scipy.integrate import ode;
 from scipy.optimize import brentq;
+from mpl_toolkits.mplot3d import Axes3D;
+# import plasma_basic as pb;
+import matplotlib.pyplot as plt;
 
 
 """
 Class for equilibrium magnetic quantities from geqdsk file
 Written by Tongnyeol Rhee (trhee@kfe.re.kr)
-NFRI, Korea
+KFE(NFRI), Korea
 
 
 ======License===================
@@ -69,11 +72,12 @@ class geqdsk_dk(Geqdsk):
       zbs = self.data['zbbbs'][0]
       r   = self.data['r'][0]
       z   = self.data['z'][0]
-      f=interpolate.interp2d(r,z,self.get('psirz'),kind='linear')
+      if not self.psi_inter:
+          self.get_psi();
       nbbbs = self.data['nbbbs'][0]
       psis = np.zeros((nbbbs,),np.float64)
       for i in range(nbbbs): 
-        psis[i] = f(rbs[i],zbs[i])
+        psis[i] = self.f(rbs[i],zbs[i])
       return np.average(psis)
     
     def get_psi(self):        
@@ -85,11 +89,18 @@ class geqdsk_dk(Geqdsk):
           from scipy import interpolate
           r   = self.data['r'][0]
           z   = self.data['z'][0]
-          self.f=interpolate.interp2d(r,z,self.get('psirz'),kind='cubic')
+          self._psi_spline = interpolate.RectBivariateSpline(r,z, self.get('psirz').T, kx=5, ky=5, s=0);
+        #   self.f= lambda Rq, Zq, *, dx=0, dy=0, grid=True: \
+        #           self._psi_spline(Rq, Zq, dx=dx, dy=dy, grid=grid)[0];
+          self.f = self._f_psi # for multi processing
           self.psi_inter = True
       else:
           pass;
       return self.f
+
+    def _f_psi(self, Rq, Zq, *, dx=0, dy=0, grid=True):
+        return self._psi_spline(Rq, Zq, dx=dx, dy=dy, grid=grid)[0]
+
     def get_psi_normal(self):
         """
         Return psi_normal interpolation on 2D
@@ -101,17 +112,18 @@ class geqdsk_dk(Geqdsk):
           z   = self.data['z'][0]
           psi_mag = self.get('simag')
           psiw    = self.get('psiw')
-        #   self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='cubic')
-          normalized_psi = (self.get('psirz') - psi_mag) / psiw
-        #   # RegularGridInterpolator is generally preferred over interp2d for performance.
-        #   # Note that RegularGridInterpolator expects values to be in (nx, ny) order,
-        #   # while interp2d expects (ny, nx), so a transpose is needed.
-          self.f_normal = interpolate.RegularGridInterpolator((r, z), normalized_psi.T, method='cubic', bounds_error=False, fill_value=None)
+          #self.f_normal=interpolate.interp2d(r,z,(self.get('psirz')-psi_mag)/psiw,kind='quintic')
+          self._psi_spline_normal = interpolate.RectBivariateSpline(r,z, (self.get('psirz').T-psi_mag)/psiw, kx=5, ky=5, s=0);
+        #   self.f_normal=lambda Rq, Zq, *, dx=0, dy=0, grid=True: \
+        #           self._psi_spline_normal(Rq, Zq, dx=dx, dy=dy, grid=grid)[0];
+          self.f_normal = self._f_psi_normal # for multi processing
           self.psi_inter_normal = True
         else:
             pass;
         return self.f_normal
     
+    def _f_psi_normal(self, Rq, Zq, *, dx=0, dy=0, grid=True):
+        return self._psi_spline_normal(Rq, Zq, dx=dx, dy=dy, grid=grid)[0]
     
     
     def get_eps(self):
@@ -312,30 +324,6 @@ class geqdsk_dk(Geqdsk):
             Brs += [Br]; Bzs += [Bz] ; Bphis += [Bphi]
     
         return np.array(Brs), np.array(Bzs), np.array(Bphis);
-    
-    def psiN_RZ(self, psiN): 
-        if not self.psi_inter_normal:
-            self.get_psi_normal();
-        def f_psiN(R):
-            return self.f_normal(R,self.data['zmaxis'][0])[0]-psiN;
-        Rv = brentq(f_psiN,self.data['rmaxis'][0],self.Rlast());
-        return Rv;
-
-    def get_B_normal(self,R,Z):
-        """
-        b field
-        input: R, Z
-        output: b vector (R, phi, Z)
-        """
-        bR, bZ, bT  = self.B_field(R,Z)
-        B = np.sqrt(bR**2+bZ**2+bT**2);
-        return np.array([bR,bT,bZ])/B
-
-
-    def init_operators(self):
-#        x=self.get_B_abs()
-        return 1
-
 
     def b_field(self,R,Z):
         """
@@ -404,78 +392,6 @@ class geqdsk_dk(Geqdsk):
         else:
                return self.f_RZ_Nl(psi_n).item(),self.get('zmaxis');
 
-
-    def dr(self,t,y):
-        """
-        Field line tracing BR, BZ
-        """
-        BR, BZ, BT = self.B_field(y[0],y[1]);
-        return np.array([BR, BZ])*y[0]/BT;
-
-    def ang(self,A,B):
-        """
-        Angle between 2D vector A and B
-        return angle in radian
-        """
-        a = np.sqrt(A[0]**2 + A[1]**2);
-        b = np.sqrt(B[0]**2 + B[1]**2);
-        ab = A[0]*B[0]+A[1]*B[1];
-        return np.arccos(ab/(a*b));
-
-
-    def polyg(self, psi_n, ndphi = 100):   
-        """
-        Calculation of polygon consisting flux surface
-        input 
-            psi_n:normalized psi value which we want to know
-            ndphi: between points toroidal angle
-        return flux surface R, Z
-
-        """
-        if psi_n <=0.:
-            print("Input 0 < psi_n < 1 please")
-            return 0.;
-        Rax, Zax = self.get('rmaxis'), self.get('zmaxis');
-        Ro = self.psiN_RZ(psi_n)
-        Zo = Zax;
-        dphi = np.pi*2./float(ndphi)
-        theta_rot = 0.;
-
-        r = ode(self.dr).set_integrator('vode',method = 'adams',with_jacobian = False, 
-                max_step = 100000);
-
-        r.set_initial_value([Ro,Zo],0.);
-
-        R0, Z0 = Ro, Zo;
-        yi = np.array([R0,Z0,0.]);
-        while theta_rot < 2.*np.pi:
-            r.integrate(r.t+dphi);
-            R1, Z1 = r.y[0], r.y[1];
-            dtheta = self.ang([R0-Rax,Z0-Zax],[R1-Rax,Z1-Zax]);
-            theta_rot += np.abs(dtheta);
-            R0, Z0 = R1, Z1;
-            yi = np.vstack((yi,np.array([r.y[0],r.y[1],r.t])));
-        if theta_rot == 2.*np.pi: 
-            return yi;
-        else:
-            return np.vstack((yi[0:-1,:],np.array([Ro,Zo,r.t])));
-    
-    def polyg_q(self,qv,ndphi=100):
-        """
-        Calcuation of polygon consisting flux surface of given q value
-        input
-            qv      : q value 
-            ndphi   : between points toroidal angle
-        return
-            flux surface R,Z
-        """
-        if self.data['qpsi'][0][0] < qv < self.data['qpsi'][0][-1]: 
-            psin = self.q_root_inter(qv);
-            return self.polyg(psin,ndphi)
-        else:
-            print(" q value is not in the equilibrium range")
-            return 0;
-
     def init_rbx(self): 
        ix1 = 0;
        nbbbs = self.data['nbbbs'][0];
@@ -488,12 +404,12 @@ class geqdsk_dk(Geqdsk):
                      izblr[ix1] = i;
                      ix1+=1;
               elif((zmaxis - zbbbs[i])*(zmaxis- zbbbs[i+1])<0.): 
-                     print(" zbbbs[%d]-zmaxis =%f %f\n"%(i,zmaxis-zbbbs[i],zmaxis-zbbbs[i+1]));
+                     #print(" zbbbs[%d]-zmaxis =%f %f\n"%(i,zmaxis-zbbbs[i],zmaxis-zbbbs[i+1]));
                      izblr[ix1] = i; 
                      ix1+=1; 
        ####### get rbxl and rblr #######
        #double R2, R1, Z2, Z1, Rb1, Rb2, Zx;
-       print("ix1 is %d"%ix1);
+       #print("ix1 is %d"%ix1);
        if(ix1==2):
               Zx  = zmaxis;
               ix2 = izblr[0];
@@ -510,7 +426,7 @@ class geqdsk_dk(Geqdsk):
                      Rb2 = (R2 - R1)/(Z2-Z1)*(Zx-(R2*Z1-R1*Z2)/(R2-R1));
               else:
                      Rb2 = R1;
-              print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
+              #print("Rb1 is %f and Rb2 is %f\n"%(Rb1, Rb2));
               if(Rb1 >= Rb2):
               	self.rbxl = Rb2;
               	self.rbxr = Rb1;
@@ -547,3 +463,6 @@ class geqdsk_dk(Geqdsk):
        	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
        psi_Rs[0] 	= 0.; 
        self.f_RZ_Nr   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
+
+
+

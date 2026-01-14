@@ -5,7 +5,7 @@ Author : Minjun J. Choi (mjchoi@nfri.re.kr)
 Collaborators : Jieun Lee, Yoonbum Nam
 Acknowledgements : Tongryeol Rhee
 """
-from geqdsk_dk import geqdsk_dk as geqdsk_dk
+from geqdsk_dk3 import geqdsk_dk
 import numpy as np
 from scipy import interpolate
 import matplotlib.pyplot as plt
@@ -87,7 +87,7 @@ class ProfFunc(object):
 
     # psin = f(R, z) ## different interpolation may result in difference
     def F_psin(self, R, z):
-        return self._psi_interp((R, z))
+        return self._psi_interp(R, z)
 
     # ne [m^-3] = f(psin)
     def F_ne_psin(self, psin):

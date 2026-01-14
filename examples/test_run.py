@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 shot = 37389
 mean_time = 4150
 bfactor = 1.01 # to consider B field uncertainty; B=B*bfactor
-geqdsk_fn = 'data/EFIT/KSTAR_EFIT01_g0{:d}.00{:d}'.format(shot, mean_time)
+geqdsk_fn = 'data/KSTAR_EFIT01_g0{:d}.00{:d}'.format(shot, mean_time)
 Te_fn = 'data/ece_Te_{:d}_{:d}ms.dat'.format(shot, mean_time) # normalized psi(:), Te(:) [keV]
 ne_fn = 'data/tci_ne_{:d}_{:d}ms.dat'.format(shot, mean_time) # normalized psi(:), ne(:) [1e19 m^-3]
 
@@ -152,8 +152,8 @@ if __name__ == "__main__":
     fname = f'data/ecei_pos_{shot}_{clist[0]}_{mean_time}ms_b{bfactor}_{input_params["select"]}.pkl'
     run_equilibrium(fname)
 
-    # check channels 
-    check_channels(fname)
+    # # check channels 
+    # check_channels(fname)
 
-    # # compare different runs (hardcoded filenames)
-    # verify_results()
+    # compare different runs (hardcoded filenames)
+    verify_results()

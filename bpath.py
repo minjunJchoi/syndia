@@ -210,14 +210,14 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf, use_cache=True):
         dRdt = (c**2.0/omega)*kR/denom(R,z)
         dzdt = (c**2.0/omega)*kz/denom(R,z)
 
-        R = R + dRdt*dt
-        z = z + dzdt*dt
+        R = R + float(dRdt*dt)
+        z = z + float(dzdt*dt)
 
         kR += dkRdt(R,z)*dt
         kz += dkzdt(R,z)*dt
 
         l += 1
-
+    
     Rp = np.array(Rp_list)
     zp = np.array(zp_list)
 
