@@ -55,6 +55,39 @@ class ProfFunc(object):
         self._pert_time = 0
         self._Te_pert_interp = None
         self._ne_pert_interp = None
+        # 4) anisotropy t_r = T_par/T_perp (bi-Maxwellian; see set_anisotropy). None -> isotropic (t_r = 1)
+        self._tr_const = 1.0
+        self._tr_interp = None
+
+    def set_anisotropy(self, tr):
+        """t_r = T_par/T_perp for dist='bimaxwell'. The Te profile is then interpreted as T_perp.
+        tr : float (uniform), a file name with two columns [norm. psi, t_r],
+             or a tuple/array pair (psin, t_r).  (Kept as data, not a lambda, so it pickles for parallel runs.)"""
+        if isinstance(tr, (int, float, np.floating)):
+            if tr <= 0:
+                raise ValueError('t_r must be positive')
+            self._tr_const, self._tr_interp = float(tr), None
+            print('anisotropy t_r = {} (uniform)'.format(float(tr)))
+            return
+        if isinstance(tr, str):
+            with open(tr, 'r') as f:
+                psin_tr, tr_val = np.loadtxt(f, unpack=True)
+            print('anisotropy file = {}'.format(tr))
+        else:
+            psin_tr, tr_val = (np.asarray(v, dtype=float) for v in tr)
+        if np.any(tr_val <= 0):
+            raise ValueError('t_r must be positive')
+        self._tr_interp = interpolate.interp1d(psin_tr, tr_val, kind='linear', bounds_error=False,
+                                               fill_value=(tr_val[0], tr_val[-1]))
+
+    # t_r = T_par/T_perp = f(R, z)
+    def F_tr(self, R, z):
+        if self._tr_interp is None:
+            return self._tr_const if (np.ndim(R) == 0 and np.ndim(z) == 0) else self._tr_const*np.ones(np.shape(R))
+        val = self._tr_interp(self.F_psin(R, z))
+        if np.ndim(R) == 0 and np.ndim(z) == 0:
+            val = scalar(val)
+        return val
 
     # B = f(R, z) [T] ######################## different interpolation may result in difference
     def F_B(self, R, z):
