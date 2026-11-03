@@ -21,6 +21,12 @@ ne_fn = 'data/tci_ne_{:d}_{:d}ms.dat'.format(shot, mean_time) # normalized psi(:
 
 # Channel info
 clist = ['ECEI_GT0101-2408']
+
+# ECEI operation parameters. None -> read from the KSTAR MDSplus server (default, as before).
+# To run without MDSplus, give them explicitly. For this example (#37389) the values below are the
+# MDSplus values (they reproduce the _REF.pkl result to < 1 um):
+# ecei_params = {'hn': 1, 'lo': 77.0, 'sf': 360.0, 'sz': 150.0}
+ecei_params = None
 # clist = ['ECEI_GR0101-2408']
 # clist = ['ECEI_HT0101-2408']
 
@@ -50,7 +56,7 @@ def run_equilibrium(fname=None):
     efm.set_profile(geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)  
 
     # Set up channels 
-    efm.set_channel(shot, clist)
+    efm.set_channel(shot, clist, ecei_params=ecei_params)
 
     print("="*60)
     print("Run ECE Forward Modeling: Equilibrium without perturbations")

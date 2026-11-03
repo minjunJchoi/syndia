@@ -9,16 +9,20 @@ Acknowledgements : Jaehyun Lee
 import os
 import h5py
 import numpy as np
-from MDSplus import Connection
+from compat import LazyMDSConnection  # MDSplus is imported on first use (see compat.py)
 
 ECEI_TREE = 'ECEI'
 
 # Access MDSplus server to get ECEI operation parameters # Do not inherit Connection for multiprocessing compatibility
 MDSPLUS_SERVER = os.environ.get('MDSPLUS_SERVER', 'mdsr.kstar.kfe.re.kr:8005')
-mdsconn = Connection(MDSPLUS_SERVER)
+mdsconn = LazyMDSConnection(MDSPLUS_SERVER)
 
 class KstarEceiRemoteInfo(object):
-    def __init__(self, shot, clist):
+    def __init__(self, shot, clist, params=None):
+        """params : optional dict with the ECEI operation parameters
+                    {'hn': 1|2, 'lo': [GHz], 'sf': [mm], 'sz': [mm], 'itf': [kA] (optional)}.
+                    If given, MDSplus is not accessed (offline runs, tests); otherwise they are
+                    read from the MDSplus server exactly as before."""
 
         self.shot = shot
 
@@ -28,27 +32,35 @@ class KstarEceiRemoteInfo(object):
         self.cnidx1 = 7
         self.dev = self.clist[0][5:7]
 
-        # read operation parameters from MDSplus
-        mdsconn.openTree(ECEI_TREE, self.shot)
+        if params is not None:
+            self.hn = int(params['hn'])
+            self.itf = params.get('itf', np.nan)  # [kA]; not used in the forward model
+            self.bt = self.itf*0.0995556
+            self.lo = params['lo']
+            self.sf = params['sf']
+            self.sz = params['sz']
+        else:
+            # read operation parameters from MDSplus
+            mdsconn.openTree(ECEI_TREE, self.shot)
 
-        hn_node = '\\{0}::TOP.ECEI_{1}:{2}_MODE'.format(ECEI_TREE, self.dev, self.dev) 
-        self.hn = mdsconn.get(hn_node).data()
-        self.hn = int(self.hn)
+            hn_node = '\\{0}::TOP.ECEI_{1}:{2}_MODE'.format(ECEI_TREE, self.dev, self.dev) 
+            self.hn = mdsconn.get(hn_node).data()
+            self.hn = int(self.hn)
 
-        itf_node = '\\{0}::TOP:{1}'.format(ECEI_TREE, 'ECEI_I_TF') 
-        self.itf = mdsconn.get(itf_node).data() # [kA]
-        self.bt = self.itf*0.0995556 # [kA] -> [T]
+            itf_node = '\\{0}::TOP:{1}'.format(ECEI_TREE, 'ECEI_I_TF') 
+            self.itf = mdsconn.get(itf_node).data() # [kA]
+            self.bt = self.itf*0.0995556 # [kA] -> [T]
 
-        lo_node = '\\{0}::TOP.ECEI_{1}:{2}_LOFREQ'.format(ECEI_TREE, self.dev, self.dev) 
-        self.lo = mdsconn.get(lo_node).data() # [GHz]
+            lo_node = '\\{0}::TOP.ECEI_{1}:{2}_LOFREQ'.format(ECEI_TREE, self.dev, self.dev) 
+            self.lo = mdsconn.get(lo_node).data() # [GHz]
 
-        sf_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSFOCUS'.format(ECEI_TREE, self.dev, self.dev) 
-        self.sf = mdsconn.get(sf_node).data() # [mm]
+            sf_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSFOCUS'.format(ECEI_TREE, self.dev, self.dev) 
+            self.sf = mdsconn.get(sf_node).data() # [mm]
 
-        sz_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSZOOM'.format(ECEI_TREE, self.dev, self.dev) 
-        self.sz = mdsconn.get(sz_node).data() # [mm]
+            sz_node = '\\{0}::TOP.ECEI_{1}:{2}_LENSZOOM'.format(ECEI_TREE, self.dev, self.dev) 
+            self.sz = mdsconn.get(sz_node).data() # [mm]
 
-        mdsconn.closeTree(ECEI_TREE, self.shot)
+            mdsconn.closeTree(ECEI_TREE, self.shot)
     
         # get vn, fn numbers and ece frequency [GHz]
         self.vn_list = np.zeros(cnum, dtype='int16')

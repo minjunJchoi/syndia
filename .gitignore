@@ -6,3 +6,5 @@ run/
 .ipynb_checkpoints/
 fort.22
 .DS_Store
+__pycache__/
+examples/regression_*.npz

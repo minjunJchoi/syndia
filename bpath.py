@@ -12,6 +12,7 @@ from scipy import interpolate
 import math
 import h5py
 import numpy as np
+from compat import scalar
 import matplotlib.pyplot as plt
 
 TB_path_eq = "/home/users/mjchoi/torbeam_ifortran/eqdsk2topfile/"
@@ -146,7 +147,7 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf, use_cache=True):
     if use_cache:
         _cache = {}
         def _q(v):
-            return round(float(v), 5)
+            return round(scalar(v), 5)
     
     # Characteristic frequencies
     if use_cache:
@@ -210,8 +211,8 @@ def ray_tracing(hn, freq, ainit, zinit, Rinit, pf, use_cache=True):
         dRdt = (c**2.0/omega)*kR/denom(R,z)
         dzdt = (c**2.0/omega)*kz/denom(R,z)
 
-        R = R + float(dRdt*dt)
-        z = z + float(dzdt*dt)
+        R = R + scalar(dRdt*dt)
+        z = z + scalar(dzdt*dt)
 
         kR += dkRdt(R,z)*dt
         kz += dkzdt(R,z)*dt

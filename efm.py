@@ -19,6 +19,7 @@ from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam
 from pintp import intp_prof
 from eceint import ece_intensity
 from geqdsk_dk_MDS import geqdsk_dk_MDS
+from compat import trapezoid
 
 e = 1.602*1e-19
 me = 9.109*1e-31
@@ -75,7 +76,7 @@ def process_single_channel(args):
             I = I + ece_int * dS
 
             int_meas = int_meas + ece_int * dS
-            tau = tau + integrate.trapz(ams,x=s) * dS                    
+            tau = tau + trapezoid(ams,x=s) * dS                    
             Rch = Rch + Rm * ece_int * dS
             zch = zch + zm * ece_int * dS
 
@@ -105,7 +106,8 @@ class EceFwdMod(object):
         
         self.pf = ProfFunc(self.geqdsk_fn, Te_fn, ne_fn, bfactor=bfactor)
 
-    def set_channel(self, shot, clist):
+    def set_channel(self, shot, clist, ecei_params=None):
+        """ecei_params : optional dict {'hn','lo','sf','sz'} for ECEI shots > 35000 to run without MDSplus."""
         self.shot = shot
 
         #### diagnostics specific parameters 
@@ -116,7 +118,7 @@ class EceFwdMod(object):
         elif 'ECEI' in clist[0] and shot > 35000:
             self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
-            self.diag = KstarEceiRemoteInfo(shot, clist)            
+            self.diag = KstarEceiRemoteInfo(shot, clist, params=ecei_params)            
         else:
             self.Lcz = 9 # e^2 fallding practical vertical width for minilens [mm]
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
