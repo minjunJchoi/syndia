@@ -17,7 +17,7 @@ from kstar_eceirt_info import *
 from pfunc import *
 from bpath import torbeam_prof, write_inbeam, run_torbeam, ray_tracing, set_beam_path, vac_beam_path
 from pintp import intp_prof
-from eceint import ece_intensity
+from eceint import ece_intensity, SHAPE_MODELS, AMP_MODELS
 from geqdsk_dk_MDS import geqdsk_dk_MDS
 from compat import trapezoid
 
@@ -29,7 +29,9 @@ mc2 = me*c**2
 
 def process_single_channel(args):
     """Process a single channel for parallel computation"""
-    cn, diag, pf, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select, Lcz, Bcf = args
+    cn, diag, pf, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select, Lcz, Bcf = args[:17]
+    shape_model = args[17] if len(args) > 17 else 'general'
+    amp_model = args[18] if len(args) > 18 else 'corrected'
     
     # sub ray dz
     dz = np.linspace(zstart, zend, Nz) # dz [mm] of sub z rays at minilens
@@ -68,7 +70,8 @@ def process_single_channel(args):
             s, F_Bs, F_Tes, F_nes = intp_prof(Rp, zp, theta, pf, 0)
 
             # calculate ECE intensity along path
-            ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, diag.hn, F_Bs, F_Tes, F_nes, select=select)
+            ece_int, Rm, zm, thm, s, jms, ams = ece_intensity(s, Rp, zp, theta, 2*np.pi*fsub[j]*1e9, diag.hn, F_Bs, F_Tes, F_nes, select=select, shape_model=shape_model,
+                                                              amp_model=amp_model)
 
             # channel response in optics and IF
             dS = np.exp(-2*(dz[i]/Lcz)**4) * np.exp(-2*( (fsub[j]-np.mean(fsub))/Bcf )**4)
@@ -124,7 +127,8 @@ class EceFwdMod(object):
             self.Bcf = 0.3 # e^2 fallding for IF response [GHz]
             self.diag = KstarEceInfo(shot, clist)
 
-    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0, select='mean', parallel=True, n_processes=None):
+    def run(self, fstart=-0.35, fend=0.35, Nf=10, zstart=-14, zend=14, Nz=10, pstart=7.8, pend=-2, pint=0.1, Rinit=2.39, torbeam=0, select='mean', parallel=True, n_processes=None, shape_model='general',
+            amp_model='corrected'):
         """
         Run ECE forward modeling
         
@@ -146,7 +150,15 @@ class EceFwdMod(object):
             If True, use parallel processing; Parallelize over channels using multiprocessing
         n_processes = int, default=None
             Number of processes to use. If None, use number of CPU cores
+        shape_model = 'general' (default) or 'legacy'
+            ECE line shape (see eceint.shape_fn); 'legacy' reproduces the original code exactly
+        amp_model = 'corrected' (default) or 'legacy'
+            Hutchinson absorption prefactors (see eceint.AMP_MODELS); 'legacy' reproduces the original code exactly
         """
+        if shape_model not in SHAPE_MODELS:
+            raise ValueError('shape_model must be one of {}'.format(SHAPE_MODELS))
+        if amp_model not in AMP_MODELS:
+            raise ValueError('amp_model must be one of {}'.format(AMP_MODELS))
 
         # ready for TORBEAM
         if torbeam == 1:
@@ -175,7 +187,7 @@ class EceFwdMod(object):
             args_list = []
             for cn in range(cnum):
                 args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz, 
-                        pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf)
+                        pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf, shape_model, amp_model)
                 args_list.append(args)
             
             # Process channels in parallel
@@ -197,19 +209,19 @@ class EceFwdMod(object):
         else:
             # Sequential processing (original code)
             self._run_sequential(cnum, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select,
-                               int_meas, rad_temp, abs_temp, tau, Rch, zch)
+                               int_meas, rad_temp, abs_temp, tau, Rch, zch, shape_model, amp_model)
 
         return Rch, zch, int_meas, tau, rad_temp, abs_temp
 
     def _run_sequential(self, cnum, fstart, fend, Nf, zstart, zend, Nz, pstart, pend, pint, Rinit, torbeam, select,
-                       int_meas, rad_temp, abs_temp, tau, Rch, zch):
+                       int_meas, rad_temp, abs_temp, tau, Rch, zch, shape_model='general', amp_model='corrected'):
         """Sequential version using process_single_channel function"""
         print(f"Using sequential processing for {cnum} channels")
         
         for cn in range(cnum):
             # Prepare arguments for the channel
             args = (cn, self.diag, self.pf, fstart, fend, Nf, zstart, zend, Nz, 
-                    pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf)
+                    pstart, pend, pint, Rinit, torbeam, select, self.Lcz, self.Bcf, shape_model, amp_model)
             
             # Process single channel
             cn_result, Rch_cn, zch_cn, int_meas_cn, tau_cn, rad_temp_cn, abs_temp_cn = process_single_channel(args)

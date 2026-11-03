@@ -37,7 +37,10 @@ n_processes = 16  # Number of processes for parallel execution
 # Input Parameters for single central ray per each channel (position)
 input_params = {
     'fstart': 0, 'fend': 0, 'Nf': 1, 'zstart': 0, 'zend': 0, 'Nz': 1,
-    'pstart': 7.8, 'pend': -2, 'pint': 0.1, 'Rinit': 2.39, 'torbeam': 0, 'select': 'max'
+    'pstart': 7.8, 'pend': -2, 'pint': 0.1, 'Rinit': 2.39, 'torbeam': 0, 'select': 'max',
+    # 'legacy' reproduces the original line shape and absorption prefactors (and the _REF.pkl file);
+    # the defaults ('general', 'corrected') divide the O1 prefactor by 2 pi (ECEI O-mode tau ~2-8 instead of ~13-48)
+    'shape_model': 'legacy', 'amp_model': 'legacy'
 }
 # # Input parameters for multiple rays per each channel (synthetic data)
 # input_params = {
