@@ -69,3 +69,9 @@ def intp_prof(Rp, zp, th, pf, step): # [m], [m], [rad]
     #plt.show()
 
     return s, F_Bs, F_Tes, F_nes
+
+
+def intp_tr(Rp, zp, s, pf):
+    """t_r = T_par/T_perp along the beam path (dist='bimaxwell'); linear in s (no spline overshoot)."""
+    trs = np.array([pf.F_tr(Rp[i], zp[i]) for i in range(Rp.size)], dtype=float)
+    return lambda x: np.interp(x, s, trs)
