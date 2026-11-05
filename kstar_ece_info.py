@@ -6,7 +6,7 @@
 #
 import os
 
-from MDSplus import Connection
+from compat import LazyMDSConnection  # MDSplus is imported on first use (see compat.py)
 # from MDSplus import DisconnectFromMds
 # from MDSplus._mdsshr import MdsException
 
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 # Access MDSplus server to get ECEI operation parameters # Do not inherit Connection for multiprocessing compatibility
 MDSPLUS_SERVER = os.environ.get('MDSPLUS_SERVER', 'mdsr.kstar.kfe.re.kr:8005')
-mdsconn = Connection(MDSPLUS_SERVER)
+mdsconn = LazyMDSConnection(MDSPLUS_SERVER)
 
 class KstarEceInfo(object):
     def __init__(self, shot, clist):
@@ -79,7 +79,7 @@ class KstarEceInfo(object):
         for c in range(cnum):
             # set rnode 
             if 'ECE' == self.clist[0][0:3]: # ECE
-                rnode = '\{:s}:RPOS2ND'.format(self.clist[c])
+                rnode = r'\{:s}:RPOS2ND'.format(self.clist[c])
 
             # read rnode
             rpos = mdsconn.get(rnode).data()

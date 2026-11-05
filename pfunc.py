@@ -7,6 +7,7 @@ Acknowledgements : Tongryeol Rhee
 """
 from geqdsk_dk3 import geqdsk_dk
 import numpy as np
+from compat import scalar
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
@@ -62,10 +63,10 @@ class ProfFunc(object):
             it = np.nditer(R, flags=['multi_index'], op_flags=['readonly'])
             while not it.finished:
                 idx = it.multi_index
-                B[idx] = self.geq.B_abs(R[idx], z[idx])*self.bfactor
+                B[idx] = scalar(self.geq.B_abs(R[idx], z[idx]))*self.bfactor
                 it.iternext()
         else:
-            B = float(self.geq.B_abs(R, z))*self.bfactor
+            B = scalar(self.geq.B_abs(R, z))*self.bfactor
         return B
 
     # Bvec = [Br, Bz, Bt] [T]
@@ -76,9 +77,9 @@ class ProfFunc(object):
             while not it.finished:
                 idx = it.multi_index
                 B_field = self.geq.B_field(R[idx], z[idx])
-                Bvec[0,idx] = B_field[0]
-                Bvec[1,idx] = B_field[1]
-                Bvec[2,idx] = B_field[2]
+                Bvec[0,idx] = scalar(B_field[0])
+                Bvec[1,idx] = scalar(B_field[1])
+                Bvec[2,idx] = scalar(B_field[2])
                 it.iternext()
         else:
             Bvec = self.geq.B_field(R, z)
@@ -108,6 +109,8 @@ class ProfFunc(object):
 
         # Total density
         ne = ne + ne * self.F_ne_pert(R, z)  # Add normalized perturbation
+        if np.ndim(R) == 0 and np.ndim(z) == 0:
+            ne = scalar(ne)  # scalar in -> scalar out (NumPy>=2 compat)
         return ne
 
     # Te [J] = f(psin)
@@ -129,6 +132,8 @@ class ProfFunc(object):
 
         # Total temperature
         Te = Te + Te * self.F_Te_pert(R, z)  # Add normalized perturbation
+        if np.ndim(R) == 0 and np.ndim(z) == 0:
+            Te = scalar(Te)  # scalar in -> scalar out (NumPy>=2 compat)
         return Te
 
 

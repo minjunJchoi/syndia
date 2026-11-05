@@ -10,6 +10,7 @@ import math
 import cmath
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
+from compat import trapezoid, cumulative_trapezoid, scalar
 
 # all mks units except Temperature in [J]
 # s : beam path [m] from hfs to lfs
@@ -40,7 +41,7 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne, select='mean', use_c
         # Small cache for evaluations to reduce expensive F_B, F_ne calls
         _cache = {}
         def _q(v):
-            return round(float(v), 5)
+            return round(scalar(v), 5)
 
     # characteristic frequencies
     if use_cache:
@@ -144,7 +145,7 @@ def ece_intensity(s, Rp, zp, th, omega, m, F_B, F_Te, F_ne, select='mean', use_c
     #     s[i] = s[i-1] + ds[i]
 
     # calculate differential optical depth dtau
-    dtau = integrate.trapz(ams,x=s) - np.append(0,integrate.cumtrapz(ams,x=s)) # from zero; a single point matters
+    dtau = trapezoid(ams,x=s) - np.append(0,cumulative_trapezoid(ams,x=s)) # from zero; a single point matters
 
     # emissitivty after reabsorption
     jms = np.zeros(s.size)

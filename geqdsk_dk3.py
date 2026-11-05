@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np;
+from compat import scalar;
 from geqdsk import Geqdsk;
 from scipy import interpolate;
 from scipy.integrate import ode;
@@ -77,7 +78,7 @@ class geqdsk_dk(Geqdsk):
       nbbbs = self.data['nbbbs'][0]
       psis = np.zeros((nbbbs,),np.float64)
       for i in range(nbbbs): 
-        psis[i] = self.f(rbs[i],zbs[i])
+        psis[i] = scalar(self.f(rbs[i],zbs[i]))  # scalar(): NumPy>=2 compat
       return np.average(psis)
     
     def get_psi(self):        
@@ -451,7 +452,7 @@ class geqdsk_dk(Geqdsk):
        psi_Rs = np.zeros(nR,dtype='float');
        for i in range(nR):
        	Rs[i] = rmaxis+dR*float(i);
-       	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
+       	psi_Rs[i] = scalar((self.f(Rs[i],zmaxis)-simag)/psiw);  # scalar(): NumPy>=2 compat
        
        psi_Rs[0]	= 0.;
        self.f_RZ_Nl   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
@@ -460,7 +461,7 @@ class geqdsk_dk(Geqdsk):
        dR = -(rmaxis-self.rbxr-ddR)/float(nR-1);
        for i in range(nR):
        	Rs[i] = rmaxis+dR*float(i);
-       	psi_Rs[i] = (self.f(Rs[i],zmaxis)-simag)/psiw;
+       	psi_Rs[i] = scalar((self.f(Rs[i],zmaxis)-simag)/psiw);  # scalar(): NumPy>=2 compat
        psi_Rs[0] 	= 0.; 
        self.f_RZ_Nr   = interpolate.interp1d(psi_Rs,Rs,kind='cubic')
 

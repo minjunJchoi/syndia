@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import numpy as np;
 from geqdsk_dk3 import geqdsk_dk;
-import imp, os, sys;
+import os, sys;
+from compat import module_available;
 """
 Class for equilibrium magnetic quantities from MDSplus equilibrium  
 Written by Tongnyeol Rhee (trhee@kfe.re.kr)
@@ -61,7 +62,7 @@ class geqdsk_dk_MDS(geqdsk_dk):
     
     def mds_geqdsk(self,shot,time_i,treename='EFITRT1'):
        try:
-           imp.find_module('MDSplus');
+           if not module_available('MDSplus'): raise ImportError('MDSplus');
            found = True;
            import MDSplus as MDS;
        except ImportError:
